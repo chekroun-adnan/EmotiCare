@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
@@ -24,7 +25,7 @@ public class JwtUtil {
     private final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 7;
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateAccessToken(String email) {
@@ -53,6 +54,7 @@ public class JwtUtil {
             extractAllClaims(token);
             return true;
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
