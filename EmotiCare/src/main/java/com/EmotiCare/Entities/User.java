@@ -2,7 +2,10 @@ package com.EmotiCare.Entities;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.List;
 
 @Document(collection = "user")
 public class User {
@@ -18,6 +21,24 @@ public class User {
     private String password;
     private int age;
     private Role role;
+
+    @DBRef
+    private List<MoodEntry> moodEntries;
+
+    @DBRef
+    private List<JournalEntry> journalEntries;
+    @DBRef
+    private List<ConversationMessage> conversationMessages;
+    @DBRef
+    private List<Goal> goals;
+    @DBRef
+    private List<MoodForecast> moodForecasts;
+    @DBRef
+    private List<VoiceEntry> voiceEntries;
+    @DBRef
+    private List<WeeklySummary> weeklySummaries;
+    @DBRef
+    private UserEmbedding userEmbedding;
 
     public User() {}
 
