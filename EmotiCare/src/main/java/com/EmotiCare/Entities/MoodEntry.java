@@ -18,6 +18,18 @@ public class MoodEntry {
     private String notes;
     private LocalDate date;
 
+    public MoodEntry() {
+    }
+
+    public MoodEntry(String entryId, User user, String mood, Double sentimentScore, String notes, LocalDate date) {
+        this.entryId = entryId;
+        this.user = user;
+        this.mood = mood;
+        this.sentimentScore = sentimentScore;
+        this.notes = notes;
+        this.date = date;
+    }
+
     public String getEntryId() {
         return entryId;
     }
