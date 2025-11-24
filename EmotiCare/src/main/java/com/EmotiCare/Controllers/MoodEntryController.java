@@ -1,8 +1,11 @@
 package com.EmotiCare.Controllers;
 
+import com.EmotiCare.Entities.MoodEntry;
+import com.EmotiCare.Entities.User;
 import com.EmotiCare.Services.MoodEntryService;
 import com.EmotiCare.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -27,27 +31,19 @@ public class MoodEntryController {
         this.userService = userService;
     }
 
-
     @PostMapping("/create")
     public ResponseEntity<?> addMoodEntry(@RequestParam String mood,@RequestParam(required = false) Double sentimentScore, @RequestParam(required = false) String notes) {
         try{
-            moodEntryService.createMoodEntry(mood, sentimentScore, notes);
+            moodEntryService.createMood(mood, sentimentScore, notes);
             return ResponseEntity.ok("Mood Entry Created");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @GetMapping("/heatmap")
-    public ResponseEntity<?> generateSentimentHeatmap() {
-        try {
-            Map<LocalDate, String> heatmap = moodEntryService.generateSentimentHeatmap();
-            if (heatmap.isEmpty()) {
-                return ResponseEntity.ok("No mood entries found for this user.");
-            }
-            return ResponseEntity.ok(heatmap);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @GetMapping("/history")
+    public ResponseEntity<List<MoodEntry>> getMoodHistory(@RequestParam String userId) {
+        List<MoodEntry> moodHistory = moodEntryService.getMoodHistoryByUserId(userId);
+        return ResponseEntity.ok(moodHistory);
     }
 }

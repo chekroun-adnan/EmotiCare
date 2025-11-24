@@ -18,22 +18,21 @@ import java.util.Map;
 public class MoodEntryService {
 
     @Autowired
-    private final MoodEntryRepository moodEntryRepository;
+    private MoodEntryRepository moodEntryRepository;
     @Autowired
-    private final UserRepository  userRepository;
+    private  UserRepository  userRepository;
+    @Autowired
+    private AuthService authService;
 
     public MoodEntryService(MoodEntryRepository moodEntryRepository, UserRepository userRepository) {
         this.moodEntryRepository = moodEntryRepository;
         this.userRepository = userRepository;
     }
 
-    public MoodEntry createMoodEntry(String mood, Double sentimentScore, String notes) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()-> new RuntimeException("User not Found"));
+    public MoodEntry createMood(String mood, Double sentimentScore, String notes) {
+        User currentUser = authService.getCurrentUser();
         MoodEntry moodEntry = new MoodEntry();
-        moodEntry.setUser(user);
+        moodEntry.setUser(currentUser);
         moodEntry.setMood(mood);
         moodEntry.setSentimentScore(sentimentScore);
         moodEntry.setNotes(notes);
@@ -41,37 +40,8 @@ public class MoodEntryService {
         return moodEntryRepository.save(moodEntry);
     }
 
-    public List<MoodEntry> getMoodHistory(String userId,LocalDate startDate, LocalDate endDate){
-        return moodEntryRepository.findByUser_IdAndDateBetween(userId, startDate,endDate);
+    public List<MoodEntry> getMoodHistoryByUserId(String userId) {
+        return moodEntryRepository.findByUserId(userId);
     }
 
-    public Map<LocalDate, String> generateSentimentHeatmap (){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(6);
-        List<MoodEntry> moodHistory = getMoodHistory(user.getId(),startDate, endDate);
-        Map<LocalDate, String> sentimentHeatmap = new HashMap<>();
-        for (MoodEntry moodEntry : moodHistory) {
-            Double sentimentScore = moodEntry.getSentimentScore();
-            if (sentimentScore == null) {
-                sentimentScore = 0.0;
-            }
-            sentimentHeatmap.put(moodEntry.getDate(), String.format("%.2f", sentimentScore));
-        }
-
-        return sentimentHeatmap;
-    }
-
-    public void saveForecastResults(User user, Map<LocalDate, String> forecastData){
-        forecastData.forEach((date,sentimentScore)->{
-            MoodEntry moodEntry = new MoodEntry();
-            moodEntry.setUser(user);
-            moodEntry.setDate(LocalDate.now());
-            moodEntry.setMood(moodEntry.getMood());
-            moodEntryRepository.save(moodEntry);
-        });
-    }
 }

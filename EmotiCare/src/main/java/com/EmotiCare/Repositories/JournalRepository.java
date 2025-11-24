@@ -9,4 +9,6 @@ import java.util.List;
 public interface JournalRepository extends MongoRepository<JournalEntry, String> {
     List<JournalEntry> findByUser(User user);
     List<JournalEntry> findByUserAndCreatedAt(User user, LocalDateTime createdAt);
+
+    List<JournalEntry> findByUser_Id(String id);
 }

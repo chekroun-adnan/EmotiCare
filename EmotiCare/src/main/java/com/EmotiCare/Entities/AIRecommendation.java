@@ -11,7 +11,7 @@ public class AIRecommendation {
 
     @Id
     private String id;
-    private String type; // Motivation, Exercise, Relaxation, Goal
+    private String type;
     private String message;
     private LocalDate date;
 

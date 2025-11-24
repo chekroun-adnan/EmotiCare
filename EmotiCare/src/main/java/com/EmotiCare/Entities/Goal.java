@@ -13,6 +13,8 @@ public class Goal {
     private String goalId;
     @DBRef
     private User user;
+
+    private String title;
     private String description;
     private String status;
     private String recommendedBy;
@@ -82,5 +84,12 @@ public class Goal {
 
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+    public void setTitle(String title) {
+        this.title = title;
     }
 }

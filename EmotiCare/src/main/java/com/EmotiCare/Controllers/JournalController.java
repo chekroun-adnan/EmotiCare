@@ -5,8 +5,13 @@ import com.EmotiCare.Services.JournalService;
 import com.EmotiCare.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Controller
 @RequestMapping("/journal")
@@ -26,17 +31,27 @@ public class JournalController {
     public ResponseEntity<?> createJournal(@RequestBody JournalEntry journalEntry) {
         try {
             JournalEntry savedEntry = journalService.addJournalEntry(journalEntry.getContent());
-            return ResponseEntity.ok(savedEntry);
+            return ResponseEntity.ok("Journal Entry Created");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @DeleteMapping("/delete/{entryId}")
-    public ResponseEntity<?> deleteJournal(@PathVariable String entryId ) {
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteJournal(@RequestParam String entryId ) {
         try {
             journalService.deleteJournal(entryId);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok("Journal Entry Deleted");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping ("/get")
+    public ResponseEntity<?> getJournalByDate() {
+        try{
+            List<JournalEntry> journalEntries = journalService.getAllJournalEntries();
+            return ResponseEntity.ok(journalEntries);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

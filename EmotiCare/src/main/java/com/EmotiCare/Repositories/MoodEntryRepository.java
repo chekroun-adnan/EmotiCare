@@ -9,4 +9,6 @@ import java.util.Optional;
 
 public interface MoodEntryRepository extends MongoRepository<MoodEntry, String> {
     List<MoodEntry> findByUser_IdAndDateBetween(String userId, LocalDate startDate, LocalDate endDate);
+
+    List<MoodEntry> findByUserId(String userId);
 }

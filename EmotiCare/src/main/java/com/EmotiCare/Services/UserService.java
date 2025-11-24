@@ -26,6 +26,7 @@ public class UserService {
         User existingUser = existingUserOpt.get();
         existingUser.setFirstName(user.getFirstName());
         existingUser.setLastName(user.getLastName());
+        existingUser.setEmail(user.getEmail());
         existingUser.setAge(user.getAge());
         existingUser.setPassword(user.getPassword());
         return userRepository.save(existingUser);

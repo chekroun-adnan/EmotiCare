@@ -17,22 +17,16 @@ import java.util.List;
 public class JournalService {
 
     @Autowired
-   private final JournalRepository journalRepository;
+   private JournalRepository journalRepository;
     @Autowired
-    private final UserRepository userRepository;
-
-    public JournalService(JournalRepository journalRepository, UserRepository userRepository) {
-        this.journalRepository = journalRepository;
-        this.userRepository = userRepository;
-    }
+    private UserRepository userRepository;
+    @Autowired
+    private AuthService authService;
 
     public JournalEntry addJournalEntry(String content) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email =   authentication.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()->new RuntimeException("User not found"));
+        User currentUser = authService.getCurrentUser();
         JournalEntry journalEntry = new JournalEntry();
-        journalEntry.setUser(user);
+        journalEntry.setUser(currentUser);
         journalEntry.setContent(content);
         journalEntry.setEmotionTags(null);
         journalEntry.setSentimentScore(0.0);
@@ -40,33 +34,23 @@ public class JournalService {
         return journalRepository.save(journalEntry);
     }
 
-    public List<JournalEntry> getJournalEntry() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email =   authentication.getName();
-        User user  = userRepository.findByEmail(email)
-                .orElseThrow(()->new RuntimeException("User not found"));
-        return journalRepository.findByUser(user);
+    public List<JournalEntry> getJournalEntryByDate(LocalDateTime createdAt){
+        User currentUser = authService.getCurrentUser();
+        return journalRepository.findByUserAndCreatedAt(currentUser,createdAt);
     }
 
-    public List<JournalEntry> getJournalEntryByDate(LocalDateTime createdAt){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email =   authentication.getName();
-        User user  = userRepository.findByEmail(email)
-                .orElseThrow(()->new RuntimeException("User not found"));
-        return journalRepository.findByUserAndCreatedAt(user,createdAt);
+    public List<JournalEntry> getAllJournalEntries() {
+        User currentUser = authService.getCurrentUser();
+        return journalRepository.findByUser_Id(currentUser.getId());
     }
 
     public void deleteJournal(String entryId){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email =   authentication.getName();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()->new RuntimeException("User not found"));
+        User currentUser = authService.getCurrentUser();
 
         JournalEntry existingJournal = journalRepository.findById(entryId)
                 .orElseThrow(()->new RuntimeException("Journal entry not found"));
 
-        if (!existingJournal.getUser().getId().equals(user.getId())) {
+        if (!existingJournal.getUser().getId().equals(currentUser.getId())) {
             throw new RuntimeException("You are not authorized to delete this journal entry");
         }
         journalRepository.delete(existingJournal);

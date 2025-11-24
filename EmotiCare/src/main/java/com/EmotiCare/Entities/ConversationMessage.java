@@ -13,7 +13,7 @@ public class ConversationMessage {
     private String messageId;
     @DBRef
     private User user;
-    private String sender; // "USER" or "AI"
+    private String sender;
     private String message;
     private LocalDateTime timestamp;
     private String aiModelVersion;
