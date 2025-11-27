@@ -30,7 +30,7 @@ public class JournalController {
     @PostMapping("/create")
     public ResponseEntity<?> createJournal(@RequestBody JournalEntry journalEntry) {
         try {
-            JournalEntry savedEntry = journalService.addJournalEntry(journalEntry.getContent());
+            JournalEntry savedEntry = journalService.addJournalEntry(journalEntry);
             return ResponseEntity.ok("Journal Entry Created");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -52,6 +52,16 @@ public class JournalController {
         try{
             List<JournalEntry> journalEntries = journalService.getAllJournalEntries();
             return ResponseEntity.ok(journalEntries);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<?> updateJournalEntry(@RequestBody JournalEntry journalEntry) {
+        try {
+            journalService.updateJournal(journalEntry);
+            return ResponseEntity.ok("Journal Entry Updated");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

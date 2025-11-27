@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -38,29 +39,32 @@ public class GoalService {
     }
 
     public Goal updateGoal(Goal  goal){
-        User user = authService.getCurrentUser();
-         Goal existinggoal = goalRepository.findById(goal.getGoalId())
+        Goal existingGoal = goalRepository.findById(goal.getGoalId())
                 .orElseThrow(()-> new RuntimeException("Goal Not Found"));
-        if (!existinggoal.getUser().getId().equals(user.getId())){
+        User user = authService.getCurrentUser();
+        if (!existingGoal.getUser().getId().equals(user.getId())){
             throw new RuntimeException("Unauthorized");
         }
-        goal.setTitle(goal.getTitle());
-        goal.setDescription(goal.getDescription());
-        goal.setStatus(goal.getStatus());
-        goal.setEstimatedBenefit(goal.getEstimatedBenefit());
-        goal.setStartDate(LocalDate.now());
-        goal.setRecommendedBy(goal.getRecommendedBy());
-        goal.setEndDate(goal.getEndDate());
-        return goalRepository.save(goal);
+        existingGoal.setTitle(goal.getTitle());
+        existingGoal.setDescription(goal.getDescription());
+        existingGoal.setStatus(goal.getStatus());
+        existingGoal.setEstimatedBenefit(goal.getEstimatedBenefit());
+        existingGoal.setStartDate(LocalDate.now());
+        existingGoal.setRecommendedBy(goal.getRecommendedBy());
+        existingGoal.setEndDate(goal.getEndDate());
+        return goalRepository.save(existingGoal);
     }
 
-    public void deleteGoal(String goalId){
-        User user = authService.getCurrentUser();
+    public void deleteGoal(String goalId) throws Exception{
         Goal existinggoal = goalRepository.findById(goalId)
                 .orElseThrow(()-> new RuntimeException("Goal Not Found"));
-        if (existinggoal.getUser().getId().equals(user.getId())){
-            goalRepository.delete(existinggoal);
+
+        User user = authService.getCurrentUser();
+
+        if (!existinggoal.getUser().getId().equals(user.getId())){
+            throw new AccessDeniedException("You are not authorized to delete this goal");
         }
+        goalRepository.delete(existinggoal);
     }
 
     public List<Goal> getAllGoalsByUserId(){

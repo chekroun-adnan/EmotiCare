@@ -32,13 +32,7 @@ public class User {
     @DBRef
     private List<Goal> goals;
     @DBRef
-    private List<MoodForecast> moodForecasts;
-    @DBRef
-    private List<VoiceEntry> voiceEntries;
-    @DBRef
     private List<WeeklySummary> weeklySummaries;
-    @DBRef
-    private UserEmbedding userEmbedding;
 
     public User() {}
 

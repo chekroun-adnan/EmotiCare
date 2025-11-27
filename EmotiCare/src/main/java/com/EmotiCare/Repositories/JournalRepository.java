@@ -11,4 +11,6 @@ public interface JournalRepository extends MongoRepository<JournalEntry, String>
     List<JournalEntry> findByUserAndCreatedAt(User user, LocalDateTime createdAt);
 
     List<JournalEntry> findByUser_Id(String id);
+
+    List<JournalEntry> findByUserAndCreatedAtBetween(User currentUser, LocalDateTime localDateTime, LocalDateTime localDateTime1);
 }
