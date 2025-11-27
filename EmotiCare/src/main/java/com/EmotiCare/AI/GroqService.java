@@ -35,11 +35,9 @@ public class GroqService {
 
     public String generateTherapyMessage(String userId, String userMessage) {
         try {
-            // 1) Retrieve user data
             Map<String, Object> userData = userDataService.getUserData(userId);
             logger.info("User data: {}", userData);
 
-            // 2) Build Groq prompt
             String systemPrompt = "You are a therapy-focused AI assistant. " +
                     "Use the following user data (mood, journal entries, habits, goals) to generate a compassionate response:\n" +
                     objectMapper.writeValueAsString(userData);
@@ -51,7 +49,6 @@ public class GroqService {
             request.setModel("meta-llama/llama-4-scout-17b-16e-instruct");
             request.setMessages(List.of(systemMessage, userMsg));
 
-            // 3) Call Groq API
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(apiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -59,7 +56,6 @@ public class GroqService {
             HttpEntity<GroqChatRequest> entity = new HttpEntity<>(request, headers);
             ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, Map.class);
 
-            // 4) Extract response
             List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             return (String) message.get("content");
