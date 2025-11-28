@@ -1,7 +1,6 @@
 package com.EmotiCare.Entities;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -10,68 +9,23 @@ import java.time.LocalDateTime;
 public class ConversationMessage {
 
     @Id
-    private String messageId;
-    @DBRef
-    private User user;
+    private String id;
+
+    private String userId;
     private String sender;
-    private String message;
-    private LocalDateTime timestamp;
-    private String aiModelVersion;
-    private Double sentimentScore;
+    private String content;
+    private LocalDateTime timestamp = LocalDateTime.now();
 
-    public String getMessageId() {
-        return messageId;
-    }
+    public ConversationMessage() {}
 
-    public void setMessageId(String messageId) {
-        this.messageId = messageId;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getSender() {
-        return sender;
-    }
-
-    public void setSender(String sender) {
-        this.sender = sender;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getAiModelVersion() {
-        return aiModelVersion;
-    }
-
-    public void setAiModelVersion(String aiModelVersion) {
-        this.aiModelVersion = aiModelVersion;
-    }
-
-    public Double getSentimentScore() {
-        return sentimentScore;
-    }
-
-    public void setSentimentScore(Double sentimentScore) {
-        this.sentimentScore = sentimentScore;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public String getSender() { return sender; }
+    public void setSender(String sender) { this.sender = sender; }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 }

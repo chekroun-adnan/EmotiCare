@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,31 +18,45 @@ import java.util.Map;
 @Service
 public class MoodEntryService {
 
-    @Autowired
-    private MoodEntryRepository moodEntryRepository;
-    @Autowired
-    private  UserRepository  userRepository;
-    @Autowired
-    private AuthService authService;
+    private final MoodEntryRepository moodEntryRepository;
+    private final UserRepository userRepository;
+    private final AuthService authService;
 
-    public MoodEntryService(MoodEntryRepository moodEntryRepository, UserRepository userRepository) {
+    @Autowired
+    public MoodEntryService(
+            MoodEntryRepository moodEntryRepository,
+            UserRepository userRepository,
+            AuthService authService
+    ) {
         this.moodEntryRepository = moodEntryRepository;
         this.userRepository = userRepository;
+        this.authService = authService;
     }
 
     public MoodEntry createMood(String mood, Double sentimentScore, String notes) {
+
         User currentUser = authService.getCurrentUser();
+
         MoodEntry moodEntry = new MoodEntry();
-        moodEntry.setUser(currentUser);
+        moodEntry.setUserId(currentUser.getId());
         moodEntry.setMood(mood);
-        moodEntry.setSentimentScore(sentimentScore);
-        moodEntry.setNotes(notes);
-        moodEntry.setDate(LocalDate.now());
+        moodEntry.setNote(notes); // FIXED
+        moodEntry.setTimestamp(LocalDateTime.now());
+
         return moodEntryRepository.save(moodEntry);
     }
 
-    public List<MoodEntry> getMoodHistoryByUserId(String userId) {
+    public List<MoodEntry> getMoodHistory(String userId) {
         return moodEntryRepository.findByUserId(userId);
     }
 
+    public List<MoodEntry> getMoodHistoryByDateRange(LocalDate start, LocalDate end) {
+        User currentUser = authService.getCurrentUser();
+
+        return moodEntryRepository.findByUserIdAndTimestampBetween(
+                currentUser.getId(),
+                start.atStartOfDay(),
+                end.plusDays(1).atStartOfDay()
+        );
+    }
 }

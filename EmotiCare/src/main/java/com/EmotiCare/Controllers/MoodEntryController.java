@@ -43,7 +43,7 @@ public class MoodEntryController {
 
     @GetMapping("/history")
     public ResponseEntity<List<MoodEntry>> getMoodHistory(@RequestParam String userId) {
-        List<MoodEntry> moodHistory = moodEntryService.getMoodHistoryByUserId(userId);
+        List<MoodEntry> moodHistory = moodEntryService.getMoodHistory(userId);
         return ResponseEntity.ok(moodHistory);
     }
 }

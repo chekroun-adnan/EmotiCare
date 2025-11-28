@@ -7,10 +7,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface JournalRepository extends MongoRepository<JournalEntry, String> {
-    List<JournalEntry> findByUser(User user);
-    List<JournalEntry> findByUserAndCreatedAt(User user, LocalDateTime createdAt);
 
-    List<JournalEntry> findByUser_Id(String id);
+    List<JournalEntry> findByUserId(String userId);
 
-    List<JournalEntry> findByUserAndCreatedAtBetween(User currentUser, LocalDateTime localDateTime, LocalDateTime localDateTime1);
+    List<JournalEntry> findByUserIdAndTimestampBetween(
+            String userId,
+            LocalDateTime start,
+            LocalDateTime end
+    );
 }

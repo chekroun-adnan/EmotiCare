@@ -18,10 +18,9 @@ public class HabitService {
 
     public Habit addHabit(Habit habit) {
         User currentUser = authService.getCurrentUser();
-        habit.setUser(currentUser);
+        habit.setUserId(currentUser.getId());
         habit.setName(habit.getName());
-        habit.setType(habit.getType());
-        habit.setGoal(habit.getGoal());
+        habit.setDescription(habit.getDescription());
         return repository.save(habit);
     }
 
@@ -29,7 +28,7 @@ public class HabitService {
         Habit habit = repository.findById(habitId)
                 .orElseThrow(() -> new RuntimeException("Habit not found"));
         User currentUser = authService.getCurrentUser();
-        if (!habit.getUser().getId().equals(currentUser.getId())) {
+        if (!habit.getUserId().equals(currentUser.getId())) {
             throw new RuntimeException("You are not authorized to delete this habit");
         } else {
             repository.delete(habit);
@@ -45,12 +44,11 @@ public class HabitService {
         Habit existingHabit = repository.findById(habit.getId())
                 .orElseThrow(() -> new RuntimeException("Habit not found"));
         User currentUser = authService.getCurrentUser();
-        if (!existingHabit.getUser().getId().equals(currentUser.getId())) {
+        if (!existingHabit.getUserId().equals(currentUser.getId())) {
             throw new RuntimeException("You are not authorized to update this habit");
         } else {
             existingHabit.setName(habit.getName());
-            existingHabit.setType(habit.getType());
-            existingHabit.setGoal(habit.getGoal());
+            existingHabit.setDescription(habit.getDescription());
             return repository.save(existingHabit);
         }
     }

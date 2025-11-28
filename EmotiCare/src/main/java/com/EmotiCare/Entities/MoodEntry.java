@@ -5,76 +5,28 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Document(collection = "mood_entries")
 public class MoodEntry {
     @Id
-    private String entryId;
-    @DBRef
-    private User user;
-
+    private String id;
+    private String userId;
     private String mood;
-    private Double sentimentScore;
-    private String notes;
-    private LocalDate date;
+    private String note;
+    private LocalDateTime timestamp = LocalDateTime.now();
 
-    public MoodEntry() {
-    }
+    public MoodEntry() {}
 
-    public MoodEntry(String entryId, User user, String mood, Double sentimentScore, String notes, LocalDate date) {
-        this.entryId = entryId;
-        this.user = user;
-        this.mood = mood;
-        this.sentimentScore = sentimentScore;
-        this.notes = notes;
-        this.date = date;
-    }
-
-    public String getEntryId() {
-        return entryId;
-    }
-
-    public void setEntryId(String entryId) {
-        this.entryId = entryId;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getMood() {
-        return mood;
-    }
-
-    public void setMood(String mood) {
-        this.mood = mood;
-    }
-
-    public Double getSentimentScore() {
-        return sentimentScore;
-    }
-
-    public void setSentimentScore(Double sentimentScore) {
-        this.sentimentScore = sentimentScore;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
+    // getters/setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public String getMood() { return mood; }
+    public void setMood(String mood) { this.mood = mood; }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 }

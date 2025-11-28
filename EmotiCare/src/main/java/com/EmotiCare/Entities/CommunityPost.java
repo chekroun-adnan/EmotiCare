@@ -5,39 +5,23 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-
 @Document(collection = "community_posts")
 public class CommunityPost {
-
     @Id
-    private String postId;
-    private String content;
-    private LocalDate date;
-    private int likes;
+    private String id;
+    private String userId;
+    private String text;
+    private LocalDateTime timestamp = LocalDateTime.now();
 
-    @DBRef
-    private User user;
-
-    @DBRef
-    private List<CommunityPost> replies;
-
-    public String getPostId() { return postId; }
-    public void setPostId(String postId) { this.postId = postId; }
-
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
-
-    public LocalDate getDate() { return date; }
-    public void setDate(LocalDate date) { this.date = date; }
-
-    public int getLikes() { return likes; }
-    public void setLikes(int likes) { this.likes = likes; }
-
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public List<CommunityPost> getReplies() { return replies; }
-    public void setReplies(List<CommunityPost> replies) { this.replies = replies; }
+    public CommunityPost() {}
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public String getText() { return text; }
+    public void setText(String text) { this.text = text; }
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 }
-

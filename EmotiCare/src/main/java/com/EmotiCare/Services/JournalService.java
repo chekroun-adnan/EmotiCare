@@ -27,23 +27,21 @@ public class JournalService {
     public JournalEntry addJournalEntry(JournalEntry journal) {
         User currentUser = authService.getCurrentUser();
         JournalEntry journalEntry = new JournalEntry();
-        journalEntry.setUser(currentUser);
-        journalEntry.setContent(journal.getContent());
-        journalEntry.setEmotionTags(null);
-        journalEntry.setSentimentScore(0.0);
-        journalEntry.setCreatedAt(LocalDateTime.now());
+        journalEntry.setUserId(currentUser.getId());
+        journalEntry.setText(journal.getText());
+        journalEntry.setTimestamp(LocalDateTime.now());
         return journalRepository.save(journalEntry);
     }
 
     public List<JournalEntry> getAllJournalEntries() {
         User currentUser = authService.getCurrentUser();
-        return journalRepository.findByUser_Id(currentUser.getId());
+        return journalRepository.findByUserId(currentUser.getId());
     }
 
     public List<JournalEntry> getJournalEntriesByDate(LocalDate date) {
         User currentUser = authService.getCurrentUser();
-        return journalRepository.findByUserAndCreatedAtBetween(
-                currentUser,
+        return journalRepository.findByUserIdAndTimestampBetween(
+                currentUser.getId(),
                 date.atStartOfDay(),
                 date.plusDays(1).atStartOfDay()
         );
@@ -54,24 +52,22 @@ public class JournalService {
         JournalEntry existingJournal = journalRepository.findById(entryId)
                 .orElseThrow(() -> new RuntimeException("Journal entry not found"));
 
-        if (!existingJournal.getUser().getId().equals(currentUser.getId())) {
+        if (!existingJournal.getUserId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You are not authorized to delete this journal entry");
         }
         journalRepository.delete(existingJournal);
     }
 
     public JournalEntry updateJournal(JournalEntry journal) {
-        JournalEntry existingJournal = journalRepository.findById(journal.getEntryId())
+        JournalEntry existingJournal = journalRepository.findById(journal.getId())
                 .orElseThrow(() -> new RuntimeException("Journal entry not found"));
 
         User currentUser = authService.getCurrentUser();
 
-        if (!existingJournal.getUser().getId().equals(currentUser.getId())) {
+        if (!existingJournal.getUserId().equals(currentUser.getId())) {
             throw new RuntimeException("You are not authorized to update this journal entry");
         }
-        existingJournal.setContent(journal.getContent());
-        existingJournal.setEmotionTags(journal.getEmotionTags());
-        existingJournal.setSentimentScore(journal.getSentimentScore());
+        existingJournal.setText(journal.getText());
         return journalRepository.save(existingJournal);
     }
 }

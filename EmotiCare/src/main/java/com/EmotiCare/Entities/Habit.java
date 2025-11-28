@@ -8,34 +8,19 @@ import java.util.List;
 
 @Document(collection = "habits")
 public class Habit {
-
     @Id
     private String id;
+    private String userId;
     private String name;
-    private String type;
-    private int goal;
+    private String description;
 
-    @DBRef
-    private User user;
-
-    @DBRef
-    private List<HabitEntry> entries;
-
+    public Habit() {}
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
-
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-
-    public int getGoal() { return goal; }
-    public void setGoal(int goal) { this.goal = goal; }
-
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public List<HabitEntry> getEntries() { return entries; }
-    public void setEntries(List<HabitEntry> entries) { this.entries = entries; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }

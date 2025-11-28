@@ -21,7 +21,7 @@ public class TherapyController {
 
     @PostMapping("/{userId}/message")
     public ResponseEntity<?> sendMessage(@PathVariable String userId, @RequestBody UserMessageDTO dto) {
-        String reply = groqService.generateTherapyMessage(userId, dto.getMessage());
+        String reply = groqService.generateTherapyMessageAndSave(userId, dto.getMessage());
         return ResponseEntity.ok(reply);
     }
 }
