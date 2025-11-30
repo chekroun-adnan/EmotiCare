@@ -16,6 +16,7 @@ public interface MoodEntryRepository extends MongoRepository<MoodEntry, String> 
             LocalDateTime end
     );
 
-    // Get all moods of a user
     List<MoodEntry> findByUserId(String userId);
+
+    List<MoodEntry> findByUserIdOrderByTimestampAsc(String userId);
 }

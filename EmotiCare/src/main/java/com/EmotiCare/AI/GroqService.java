@@ -38,15 +38,11 @@ public class GroqService {
         this.conversationRepository = conversationRepository;
     }
 
-    /**
-     * Sends user message and data to Groq AI, saves conversation, and returns raw AI content.
-     */
     public String generateTherapyMessageAndSave(String userId, String userMessage) {
         try {
             Map<String, Object> userData = userDataService.getUserData(userId);
             logger.info("User data keys: {}", userData.keySet());
 
-            // Build messages history for the AI
             List<Map<String, String>> historyMessages = new ArrayList<>();
 
             String systemPrompt =
@@ -88,7 +84,6 @@ public class GroqService {
 
             String content = (String) message.get("content");
 
-            // Save user message
             ConversationMessage userMsgEntity = new ConversationMessage();
             userMsgEntity.setUserId(userId);
             userMsgEntity.setSender("user");
@@ -96,7 +91,6 @@ public class GroqService {
             userMsgEntity.setTimestamp(java.time.LocalDateTime.now());
             conversationRepository.save(userMsgEntity);
 
-            // Save assistant message
             ConversationMessage assistantMsgEntity = new ConversationMessage();
             assistantMsgEntity.setUserId(userId);
             assistantMsgEntity.setSender("assistant");
@@ -112,17 +106,12 @@ public class GroqService {
         }
     }
 
-    /**
-     * Generates an AIAction object from AI response, ensuring a human-friendly message.
-     */
     public AIAction generateAction(String userId, String userMessage) {
         String raw = generateTherapyMessageAndSave(userId, userMessage);
 
         try {
-            // Try parsing raw response as AIAction
             AIAction action = objectMapper.readValue(raw, AIAction.class);
 
-            // Map structured actions to real message dynamically if data is empty
             if (action.getAction() != null) {
                 String userFriendlyMessage = switch (action.getAction()) {
                     case "EXPRESS_FEELINGS" -> {
@@ -134,11 +123,10 @@ public class GroqService {
                                 ". Let's talk through this together.";
                     }
                     case "EXPRESS_EMPATHY" -> "I understand how you feel. Can you tell me more about what's going on?";
-                    default -> raw; // fallback
+                    default -> raw;
                 };
                 action.setData(Map.of("message", userFriendlyMessage));
             } else {
-                // fallback if raw isn't an action
                 AIAction fallback = new AIAction();
                 fallback.setAction("SEND_MESSAGE_TO_USER");
                 fallback.setData(Map.of("message", raw));
@@ -148,7 +136,6 @@ public class GroqService {
             return action;
 
         } catch (Exception e) {
-            // fallback if parsing fails
             AIAction fallback = new AIAction();
             fallback.setAction("SEND_MESSAGE_TO_USER");
             fallback.setData(Map.of("message", raw));

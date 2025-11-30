@@ -14,6 +14,7 @@ public class ConversationMessage {
     private String userId;
     private String sender;
     private String content;
+    private String sentiment;
     private LocalDateTime timestamp = LocalDateTime.now();
 
     public ConversationMessage() {}
@@ -28,4 +29,7 @@ public class ConversationMessage {
     public void setContent(String content) { this.content = content; }
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+
+    public String getSentiment() { return sentiment; }
+    public void setSentiment(String sentiment) { this.sentiment = sentiment; }
 }
