@@ -2,44 +2,61 @@ package com.EmotiCare.Controllers;
 
 import com.EmotiCare.Entities.Mood;
 import com.EmotiCare.Services.MoodService;
-import com.EmotiCare.Services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
-@Controller
-@RequestMapping("/mood")
-public class MoodEntryController {
+@RestController
+@RequestMapping("/api/moods")
+public class MoodController {
 
-    @Autowired
     private final MoodService moodService;
-    @Autowired
-    private final UserService userService;
 
-    public MoodEntryController(MoodService moodService, UserService userService) {
+    public MoodController(MoodService moodService) {
         this.moodService = moodService;
-        this.userService = userService;
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<?> addMoodEntry(@RequestParam String mood,@RequestParam(required = false) Double sentimentScore, @RequestParam(required = false) String notes) {
-        try{
-            moodService.createMood(mood, sentimentScore, notes);
-            return ResponseEntity.ok("Mood Entry Created");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @PostMapping("/track")
+    public ResponseEntity<Mood> saveMood(
+            @RequestParam String userId,
+            @RequestParam String mood,
+            @RequestParam(required = false) String note
+    ) {
+        return ResponseEntity.ok(moodService.saveMood(userId, mood, note));
     }
 
-    @GetMapping("/history")
-    public ResponseEntity<List<Mood>> getMoodHistory(@RequestParam String userId) {
-        List<Mood> moodHistory = moodService.getMoodHistory(userId);
-        return ResponseEntity.ok(moodHistory);
+    @GetMapping("/{id}")
+    public ResponseEntity<Mood> getMood(@PathVariable String id) {
+        return moodService.getMood(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/history/{userId}")
+    public ResponseEntity<List<Mood>> getMoodHistory(@PathVariable String userId) {
+        return ResponseEntity.ok(moodService.getMoodHistory(userId));
+    }
+
+    @GetMapping("/counts/{userId}")
+    public ResponseEntity<Map<String, Long>> getMoodCounts(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "7") int days
+    ) {
+        return ResponseEntity.ok(moodService.getMoodCountsLastNDays(userId, days));
+    }
+
+    @GetMapping("/distribution/{userId}")
+    public ResponseEntity<Map<String, Double>> moodDistributionPercent(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "7") int days
+    ) {
+        return ResponseEntity.ok(moodService.moodDistributionPercent(userId, days));
+    }
+
+    @GetMapping("/predict/{userId}")
+    public ResponseEntity<String> predictNextMood(@PathVariable String userId) {
+        return ResponseEntity.ok(moodService.predictNextMoodWithAI(userId));
     }
 }
