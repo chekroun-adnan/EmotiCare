@@ -1,58 +1,63 @@
 package com.EmotiCare.Services;
 
+import com.EmotiCare.AI.GroqService;
 import com.EmotiCare.Entities.Goal;
-import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.GoalRepository;
-import com.EmotiCare.Repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GoalService {
 
-    @Autowired
-    private GoalRepository goalRepository;
+    private final GoalRepository goalRepository;
+    private final GroqService groqService;
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private AuthService authService;
+    public GoalService(GoalRepository goalRepository, GroqService groqService) {
+        this.goalRepository = goalRepository;
+        this.groqService = groqService;
+    }
 
-    public Goal createGoal(Goal goal){
-        User user = authService.getCurrentUser();
-        goal.setUserId(user.getId());
-        goal.setDescription(goal.getDescription());
+    public Goal createGoal(Goal goal) {
+        goal.setCompleted(false);
         return goalRepository.save(goal);
     }
 
-    public Goal updateGoal(Goal  goal){
-        Goal existingGoal = goalRepository.findById(goal.getId())
-                .orElseThrow(()-> new RuntimeException("Goal Not Found"));
-        User user = authService.getCurrentUser();
-        if (!existingGoal.getUserId().equals(user.getId())){
-            throw new RuntimeException("Unauthorized");
-        }
-        existingGoal.setDescription(goal.getDescription());
-        return goalRepository.save(existingGoal);
+    public List<Goal> getGoals(String userId) {
+        return goalRepository.findByUserId(userId);
     }
 
-    public void deleteGoal(String goalId) throws Exception{
-        Goal existinggoal = goalRepository.findById(goalId)
-                .orElseThrow(()-> new RuntimeException("Goal Not Found"));
-
-        User user = authService.getCurrentUser();
-
-        if (!existinggoal.getUserId().equals(user.getId())){
-            throw new AccessDeniedException("You are not authorized to delete this goal");
-        }
-        goalRepository.delete(existinggoal);
+    public Optional<Goal> getGoal(String id) {
+        return goalRepository.findById(id);
     }
 
-    public List<Goal> getAllGoalsByUserId(){
-        User user = authService.getCurrentUser();
-        return goalRepository.findByUserId(user.getId());
+    public Goal updateGoal(Goal goal) {
+        return goalRepository.save(goal);
+    }
+
+    public void deleteGoal(String id) {
+        goalRepository.deleteById(id);
+    }
+
+    public Goal markGoalCompleted(String id) {
+        Goal g = goalRepository.findById(id).orElseThrow(() -> new RuntimeException("Goal not found"));
+        g.setCompleted(true);
+        return goalRepository.save(g);
+    }
+
+    public String suggestGoalsWithAI(String userId) {
+        List<Goal> goals = getGoals(userId);
+        StringBuilder sb = new StringBuilder();
+        if (goals.isEmpty()) {
+            sb.append("User has no existing goals.");
+        } else {
+            sb.append("User goals:\n");
+            for (Goal g : goals) {
+                sb.append("- ").append(g.getDescription()).append(" (completed: ").append(g.isCompleted()).append(")\n");
+            }
+        }
+        String system = "Suggest 3 achievable goals for this user based on their current goals and habits. Keep them specific and actionable.";
+        return groqService.ask(system, userId, sb.toString());
     }
 }
