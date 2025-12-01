@@ -9,51 +9,63 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller
-@RequestMapping("/habits")
+@RestController
+@RequestMapping("/api/habits")
 public class HabitController {
 
-    @Autowired
-    private HabitService habitService;
+    private final HabitService habitService;
 
+    public HabitController(HabitService habitService) {
+        this.habitService = habitService;
+    }
 
-    @PostMapping("/create")
-    public ResponseEntity<Habit> saveHabit(Habit habit) {
-        try{
-            Habit savedHabit = habitService.addHabit(habit);
-            return ResponseEntity.ok(savedHabit);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+    @PostMapping
+    public ResponseEntity<Habit> createHabit(@RequestBody Habit habit) {
+        return ResponseEntity.ok(habitService.createHabit(habit));
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Habit>> getHabits(@PathVariable String userId) {
+        return ResponseEntity.ok(habitService.getHabits(userId));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Habit> getHabit(@PathVariable String id) {
+        return habitService.getHabit(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Habit> updateHabit(@PathVariable String id, @RequestBody Habit updated) {
+        return habitService.getHabit(id)
+                .map(existing -> {
+                    updated.setId(id);
+                    return ResponseEntity.ok(habitService.updateHabit(updated));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteHabit(@PathVariable String id) {
+        if (habitService.getHabit(id).isEmpty()) {
+            return ResponseEntity.status(404).body("Habit not found");
+        }
+        habitService.deleteHabit(id);
+        return ResponseEntity.ok("Habit deleted");
+    }
+
+    @PostMapping("/complete/{id}")
+    public ResponseEntity<?> markCompleted(@PathVariable String id) {
+        try {
+            return ResponseEntity.ok(habitService.markCompleted(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body("Habit not found");
         }
     }
 
-    @GetMapping("/get")
-    public ResponseEntity<?> getAllHabits(String userId){
-        try{
-            List<Habit> habits = habitService.getAllHabitsByUserId(userId);
-            return ResponseEntity.ok(habits);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteHabit(String habitId){
-        try{
-            habitService.deleteHabit(habitId);
-            return ResponseEntity.ok("Habit Deleted");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @PutMapping("/update")
-    public ResponseEntity<?> updateHabit(Habit habit){
-        try{
-            Habit updatedHabit = habitService.updateGoal(habit);
-            return ResponseEntity.ok(updatedHabit);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @GetMapping("/suggest/{userId}")
+    public ResponseEntity<String> suggestHabitsWithAI(@PathVariable String userId) {
+        return ResponseEntity.ok(habitService.suggestHabitsWithAI(userId));
     }
 }
