@@ -1,16 +1,15 @@
 package com.EmotiCare.Repositories;
 
-import com.EmotiCare.Entities.JournalEntry;
-import com.EmotiCare.Entities.User;
+import com.EmotiCare.Entities.Journal;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface JournalRepository extends MongoRepository<JournalEntry, String> {
+public interface JournalRepository extends MongoRepository<Journal, String> {
 
-    List<JournalEntry> findByUserId(String userId);
+    List<Journal> findByUserId(String userId);
 
-    List<JournalEntry> findByUserIdAndTimestampBetween(
+    List<Journal> findByUserIdAndTimestampBetween(
             String userId,
             LocalDateTime start,
             LocalDateTime end

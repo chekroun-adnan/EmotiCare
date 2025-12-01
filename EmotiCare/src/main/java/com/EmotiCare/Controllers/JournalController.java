@@ -1,16 +1,13 @@
 package com.EmotiCare.Controllers;
 
-import com.EmotiCare.Entities.JournalEntry;
+import com.EmotiCare.Entities.Journal;
 import com.EmotiCare.Services.JournalService;
 import com.EmotiCare.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
@@ -28,9 +25,9 @@ public class JournalController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createJournal(@RequestBody JournalEntry journalEntry) {
+    public ResponseEntity<?> createJournal(@RequestBody Journal journal) {
         try {
-            JournalEntry savedEntry = journalService.addJournalEntry(journalEntry);
+            Journal savedEntry = journalService.addJournalEntry(journal);
             return ResponseEntity.ok("Journal Entry Created");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -50,7 +47,7 @@ public class JournalController {
     @GetMapping ("/get")
     public ResponseEntity<?> getJournalByDate() {
         try{
-            List<JournalEntry> journalEntries = journalService.getAllJournalEntries();
+            List<Journal> journalEntries = journalService.getAllJournalEntries();
             return ResponseEntity.ok(journalEntries);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -58,9 +55,9 @@ public class JournalController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateJournalEntry(@RequestBody JournalEntry journalEntry) {
+    public ResponseEntity<?> updateJournalEntry(@RequestBody Journal journal) {
         try {
-            journalService.updateJournal(journalEntry);
+            journalService.updateJournal(journal);
             return ResponseEntity.ok("Journal Entry Updated");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

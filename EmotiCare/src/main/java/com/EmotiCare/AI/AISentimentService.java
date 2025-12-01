@@ -20,7 +20,7 @@ public class AISentimentService {
         emotionKeywords.put("bored", new String[]{"bored", "unmotivated", "disinterested"});
         emotionKeywords.put("surprised", new String[]{"surprised", "shocked", "astonished"});
         emotionKeywords.put("confident", new String[]{"confident", "proud", "capable"});
-        emotionKeywords.put("neutral", new String[]{}); // fallback
+        emotionKeywords.put("neutral", new String[]{});
     }
 
     public String analyzeSentiment(String message) {

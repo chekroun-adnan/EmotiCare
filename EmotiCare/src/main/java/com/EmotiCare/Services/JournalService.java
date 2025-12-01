@@ -1,12 +1,10 @@
 package com.EmotiCare.Services;
 
-import com.EmotiCare.Entities.JournalEntry;
+import com.EmotiCare.Entities.Journal;
 import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.JournalRepository;
 import com.EmotiCare.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
@@ -24,21 +22,21 @@ public class JournalService {
     @Autowired
     private AuthService authService;
 
-    public JournalEntry addJournalEntry(JournalEntry journal) {
+    public Journal addJournalEntry(Journal journal) {
         User currentUser = authService.getCurrentUser();
-        JournalEntry journalEntry = new JournalEntry();
+        Journal journalEntry = new Journal();
         journalEntry.setUserId(currentUser.getId());
         journalEntry.setText(journal.getText());
         journalEntry.setTimestamp(LocalDateTime.now());
         return journalRepository.save(journalEntry);
     }
 
-    public List<JournalEntry> getAllJournalEntries() {
+    public List<Journal> getAllJournalEntries() {
         User currentUser = authService.getCurrentUser();
         return journalRepository.findByUserId(currentUser.getId());
     }
 
-    public List<JournalEntry> getJournalEntriesByDate(LocalDate date) {
+    public List<Journal> getJournalEntriesByDate(LocalDate date) {
         User currentUser = authService.getCurrentUser();
         return journalRepository.findByUserIdAndTimestampBetween(
                 currentUser.getId(),
@@ -49,7 +47,7 @@ public class JournalService {
 
     public void deleteJournal(String entryId) throws Exception{
         User currentUser = authService.getCurrentUser();
-        JournalEntry existingJournal = journalRepository.findById(entryId)
+        Journal existingJournal = journalRepository.findById(entryId)
                 .orElseThrow(() -> new RuntimeException("Journal entry not found"));
 
         if (!existingJournal.getUserId().equals(currentUser.getId())) {
@@ -58,8 +56,8 @@ public class JournalService {
         journalRepository.delete(existingJournal);
     }
 
-    public JournalEntry updateJournal(JournalEntry journal) {
-        JournalEntry existingJournal = journalRepository.findById(journal.getId())
+    public Journal updateJournal(Journal journal) {
+        Journal existingJournal = journalRepository.findById(journal.getId())
                 .orElseThrow(() -> new RuntimeException("Journal entry not found"));
 
         User currentUser = authService.getCurrentUser();
