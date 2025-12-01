@@ -10,57 +10,58 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller
-@RequestMapping("/journal")
+@RestController
+@RequestMapping("/api/journals")
 public class JournalController {
 
-    @Autowired
     private final JournalService journalService;
-    @Autowired
-    private final UserService userService;
 
-    public JournalController(JournalService journalService, UserService userService) {
+    public JournalController(JournalService journalService) {
         this.journalService = journalService;
-        this.userService = userService;
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<?> createJournal(@RequestBody Journal journal) {
-        try {
-            Journal savedEntry = journalService.addJournalEntry(journal);
-            return ResponseEntity.ok("Journal Entry Created");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @PostMapping
+    public ResponseEntity<Journal> createEntry(
+            @RequestParam String userId,
+            @RequestParam String text
+    ) {
+        return ResponseEntity.ok(journalService.createEntry(userId, text));
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteJournal(@RequestParam String entryId ) {
-        try {
-            journalService.deleteJournal(entryId);
-            return ResponseEntity.ok("Journal Entry Deleted");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Journal>> getEntries(@PathVariable String userId) {
+        return ResponseEntity.ok(journalService.getEntries(userId));
     }
 
-    @GetMapping ("/get")
-    public ResponseEntity<?> getJournalByDate() {
-        try{
-            List<Journal> journalEntries = journalService.getAllJournalEntries();
-            return ResponseEntity.ok(journalEntries);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getEntry(@PathVariable String id) {
+        Journal j = journalService.getEntry(id);
+        if (j == null) {
+            return ResponseEntity.status(404).body("Journal entry not found");
         }
+        return ResponseEntity.ok(j);
     }
 
-    @PutMapping("/update")
-    public ResponseEntity<?> updateJournalEntry(@RequestBody Journal journal) {
-        try {
-            journalService.updateJournal(journal);
-            return ResponseEntity.ok("Journal Entry Updated");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteEntry(@PathVariable String id) {
+        Journal j = journalService.getEntry(id);
+        if (j == null) {
+            return ResponseEntity.status(404).body("Journal entry not found");
         }
+        journalService.deleteEntry(id);
+        return ResponseEntity.ok("Journal entry deleted");
+    }
+
+    @GetMapping("/prompt/{userId}")
+    public ResponseEntity<String> getPrompt(@PathVariable String userId) {
+        return ResponseEntity.ok(journalService.generatePrompt(userId));
+    }
+
+    @GetMapping("/summarize/{userId}")
+    public ResponseEntity<String> summarize(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "5") int maxEntries
+    ) {
+        return ResponseEntity.ok(journalService.summarizeJournalsWithAI(userId, maxEntries));
     }
 }

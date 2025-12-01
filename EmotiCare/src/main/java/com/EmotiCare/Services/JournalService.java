@@ -1,71 +1,71 @@
 package com.EmotiCare.Services;
 
+import com.EmotiCare.AI.GroqService;
 import com.EmotiCare.Entities.Journal;
-import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.JournalRepository;
-import com.EmotiCare.Repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.AccessDeniedException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 public class JournalService {
 
-    @Autowired
-   private JournalRepository journalRepository;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private AuthService authService;
+    private final JournalRepository journalRepository;
+    private final GroqService groqService;
+    private final Random random = new Random();
 
-    public Journal addJournalEntry(Journal journal) {
-        User currentUser = authService.getCurrentUser();
-        Journal journalEntry = new Journal();
-        journalEntry.setUserId(currentUser.getId());
-        journalEntry.setText(journal.getText());
-        journalEntry.setTimestamp(LocalDateTime.now());
-        return journalRepository.save(journalEntry);
+    public JournalService(JournalRepository journalRepository, GroqService groqService) {
+        this.journalRepository = journalRepository;
+        this.groqService = groqService;
     }
 
-    public List<Journal> getAllJournalEntries() {
-        User currentUser = authService.getCurrentUser();
-        return journalRepository.findByUserId(currentUser.getId());
+    public Journal createEntry(String userId, String text) {
+        Journal j = new Journal();
+        j.setUserId(userId);
+        j.setText(text);
+        j.setTimestamp(LocalDateTime.now());
+        return journalRepository.save(j);
     }
 
-    public List<Journal> getJournalEntriesByDate(LocalDate date) {
-        User currentUser = authService.getCurrentUser();
-        return journalRepository.findByUserIdAndTimestampBetween(
-                currentUser.getId(),
-                date.atStartOfDay(),
-                date.plusDays(1).atStartOfDay()
-        );
+    public List<Journal> getEntries(String userId) {
+        return journalRepository.findByUserId(userId);
     }
 
-    public void deleteJournal(String entryId) throws Exception{
-        User currentUser = authService.getCurrentUser();
-        Journal existingJournal = journalRepository.findById(entryId)
-                .orElseThrow(() -> new RuntimeException("Journal entry not found"));
-
-        if (!existingJournal.getUserId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You are not authorized to delete this journal entry");
-        }
-        journalRepository.delete(existingJournal);
+    public void deleteEntry(String id) {
+        journalRepository.deleteById(id);
     }
 
-    public Journal updateJournal(Journal journal) {
-        Journal existingJournal = journalRepository.findById(journal.getId())
-                .orElseThrow(() -> new RuntimeException("Journal entry not found"));
+    public Journal getEntry(String id) {
+        return journalRepository.findById(id).orElse(null);
+    }
 
-        User currentUser = authService.getCurrentUser();
+    public String generatePrompt(String userId) {
+        String[] prompts = {
+                "Write about one thing you're grateful for today.",
+                "Describe a challenge you faced and how you responded.",
+                "What made you smile recently?",
+                "Write a letter to your future self about where you'd like to be in a month."
+        };
+        return prompts[random.nextInt(prompts.length)];
+    }
 
-        if (!existingJournal.getUserId().equals(currentUser.getId())) {
-            throw new RuntimeException("You are not authorized to update this journal entry");
-        }
-        existingJournal.setText(journal.getText());
-        return journalRepository.save(existingJournal);
+    public String summarizeJournalsWithAI(String userId, int maxEntries) {
+        List<Journal> entries = getEntries(userId);
+        if (entries.isEmpty()) return "No journal entries available.";
+
+        List<Journal> recent = entries.stream()
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+                .limit(maxEntries)
+                .collect(Collectors.toList());
+
+        String concat = recent.stream()
+                .map(j -> "- " + j.getText())
+                .collect(Collectors.joining("\n"));
+
+        String system = "Summarize the following journal entries into 3 concise bullet points and suggest 2 small actions the user can take next.";
+        return groqService.ask(system, userId, concat);
     }
 }
