@@ -1,11 +1,11 @@
 package com.EmotiCare.Controllers;
 
-import com.EmotiCare.AI.AICrisisDetectionService;
 import com.EmotiCare.AI.AIPredictionService;
-import com.EmotiCare.AI.AISentimentService;
 import com.EmotiCare.AI.GroqService;
 import com.EmotiCare.Entities.ConversationMessage;
 import com.EmotiCare.Repositories.ConversationRepository;
+import com.EmotiCare.Services.AICrisisDetectionService;
+import com.EmotiCare.Services.AISentimentService;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;

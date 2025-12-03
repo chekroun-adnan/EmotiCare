@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class AISentimentService {
+public class AISentService {
 
     private final Map<String, String[]> emotionKeywords = new HashMap<>();
 
-    public AISentimentService() {
+    public AISentService() {
         emotionKeywords.put("happy", new String[]{"happy", "joy", "excited", "glad", "cheerful"});
         emotionKeywords.put("sad", new String[]{"sad", "down", "unhappy", "gloomy", "depressed"});
         emotionKeywords.put("stressed", new String[]{"stress", "anxious", "overwhelmed", "tense"});

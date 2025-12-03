@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface ConversationRepository extends MongoRepository<ConversationMessage, String> {
     List<ConversationMessage> findByUserIdOrderByTimestampAsc(String userId);
+
+    List<ConversationMessage> findByUserId(String userId);
 }

@@ -3,7 +3,7 @@ package com.EmotiCare.AI;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AICrisisDetectionService {
+public class AICrisisDetectService {
     public boolean isCrisis(String message){
         String lower = message.toLowerCase();
         return lower.contains("suicide") || lower.contains("hopeless") || lower.contains("want to die");

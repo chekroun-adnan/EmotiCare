@@ -1,10 +1,8 @@
 package com.EmotiCare.AI;
 
-import com.EmotiCare.DTO.AIAction;
-import com.EmotiCare.DTO.GroqChatRequest;
 import com.EmotiCare.Entities.ConversationMessage;
 import com.EmotiCare.Repositories.ConversationRepository;
-import com.EmotiCare.Repositories.UserDataService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,133 +11,134 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class GroqService {
-
     private static final Logger logger = LoggerFactory.getLogger(GroqService.class);
 
-    @Value("${groq.api.key}")
-    private String apiKey;
-
-    @Value("${groq.api.url}")
-    private String apiUrl;
+    @Value("${groq.api.key}") private String apiKey;
+    @Value("${groq.api.url}") private String apiUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final UserDataService userDataService;
-    private final ConversationRepository conversationRepository;
+    private final ConversationRepository conversationRepo;
 
-    public GroqService(UserDataService userDataService, ConversationRepository conversationRepository) {
-        this.userDataService = userDataService;
-        this.conversationRepository = conversationRepository;
+    public GroqService(ConversationRepository conversationRepo) {
+        this.conversationRepo = conversationRepo;
     }
 
-    public String generateTherapyMessageAndSave(String userId, String userMessage) {
+    // low-level call
+    private Optional<String> callApi(String systemPrompt, String userMessage) {
         try {
-            Map<String, Object> userData = userDataService.getUserData(userId);
-            logger.info("User data keys: {}", userData.keySet());
+            List<Map<String, String>> messages = new ArrayList<>();
+            messages.add(Map.of("role", "system", "content", systemPrompt));
+            messages.add(Map.of("role", "user", "content", userMessage));
 
-            List<Map<String, String>> historyMessages = new ArrayList<>();
-
-            String systemPrompt =
-                    "You are the AI therapist assistant for EmotiCare. " +
-                            "Your task is to respond empathetically to the user, using their data: past messages, mood history, journal entries, habits, and goals. " +
-                            "Always generate a human-readable, helpful response that supports the user's feelings. " +
-                            "Optionally, include a JSON action object like {\"action\":\"ACTION_NAME\",\"data\":{...}}.";
-
-            Map<String, String> sys = Map.of(
-                    "role", "system",
-                    "content", systemPrompt + "\nUserData: " + objectMapper.writeValueAsString(userData)
-            );
-            historyMessages.add(sys);
-
-            Map<String, String> userMsg = Map.of(
-                    "role", "user",
-                    "content", userMessage
-            );
-            historyMessages.add(userMsg);
-
-            GroqChatRequest request = new GroqChatRequest();
-            request.setModel("meta-llama/llama-4-scout-17b-16e-instruct");
-            request.setMessages(historyMessages);
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("model", "meta-llama/llama-4-scout-17b-16e-instruct");
+            payload.put("messages", messages);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(apiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
-            HttpEntity<GroqChatRequest> entity = new HttpEntity<>(request, headers);
+            ResponseEntity<Map> resp = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, Map.class);
+            Map body = resp.getBody();
+            if (body == null) return Optional.empty();
 
-            ResponseEntity<Map> response =
-                    restTemplate.exchange(apiUrl, HttpMethod.POST, entity, Map.class);
-
-            List<Map<String, Object>> choices =
-                    (List<Map<String, Object>>) response.getBody().get("choices");
-
-            Map<String, Object> message =
-                    (Map<String, Object>) choices.get(0).get("message");
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
+            if (choices == null || choices.isEmpty()) return Optional.empty();
+            Map<String, Object> first = choices.get(0);
+            Map<String, Object> message = (Map<String, Object>) first.get("message");
+            if (message == null) return Optional.empty();
 
             String content = (String) message.get("content");
-
-            ConversationMessage userMsgEntity = new ConversationMessage();
-            userMsgEntity.setUserId(userId);
-            userMsgEntity.setSender("user");
-            userMsgEntity.setContent(userMessage);
-            userMsgEntity.setTimestamp(java.time.LocalDateTime.now());
-            conversationRepository.save(userMsgEntity);
-
-            ConversationMessage assistantMsgEntity = new ConversationMessage();
-            assistantMsgEntity.setUserId(userId);
-            assistantMsgEntity.setSender("assistant");
-            assistantMsgEntity.setContent(content);
-            assistantMsgEntity.setTimestamp(java.time.LocalDateTime.now());
-            conversationRepository.save(assistantMsgEntity);
-
-            return content;
+            return Optional.ofNullable(content);
 
         } catch (Exception e) {
-            logger.error("Error in GroqService", e);
-            throw new RuntimeException("Groq API call failed: " + e.getMessage(), e);
+            logger.error("Groq API call failed", e);
+            return Optional.empty();
         }
     }
 
-    public AIAction generateAction(String userId, String userMessage) {
-        String raw = generateTherapyMessageAndSave(userId, userMessage);
-
+    public String ask(String systemPrompt, String userId, String userMessage) {
+        Optional<String> resp = callApi(systemPrompt, userMessage);
+        String content = resp.orElse("Sorry, I couldn't reach the AI service right now.");
         try {
-            AIAction action = objectMapper.readValue(raw, AIAction.class);
-
-            if (action.getAction() != null) {
-                String userFriendlyMessage = switch (action.getAction()) {
-                    case "EXPRESS_FEELINGS" -> {
-                        Map<String, Object> data = action.getData();
-                        String feeling = data.getOrDefault("feeling", "unspecified").toString();
-                        String responsibility = data.getOrDefault("responsibility", "unspecified").toString();
-                        yield "I hear that you're feeling " + feeling +
-                                " and that your responsibilities make you feel " + responsibility +
-                                ". Let's talk through this together.";
-                    }
-                    case "EXPRESS_EMPATHY" -> "I understand how you feel. Can you tell me more about what's going on?";
-                    default -> raw;
-                };
-                action.setData(Map.of("message", userFriendlyMessage));
-            } else {
-                AIAction fallback = new AIAction();
-                fallback.setAction("SEND_MESSAGE_TO_USER");
-                fallback.setData(Map.of("message", raw));
-                return fallback;
-            }
-
-            return action;
-
+            ConversationMessage assistant = new ConversationMessage();
+            assistant.setUserId(userId);
+            assistant.setSender("assistant");
+            assistant.setContent(content);
+            assistant.setTimestamp(LocalDateTime.now());
+            conversationRepo.save(assistant);
         } catch (Exception e) {
-            AIAction fallback = new AIAction();
-            fallback.setAction("SEND_MESSAGE_TO_USER");
-            fallback.setData(Map.of("message", raw));
-            return fallback;
+            logger.warn("Failed to save assistant message: {}", e.getMessage());
+        }
+        return content;
+    }
+
+    public Optional<String> askRaw(String systemPrompt, String userMessage) {
+        return callApi(systemPrompt, userMessage);
+    }
+
+    public Optional<Map<String, Object>> askForJson(String systemPrompt, String userMessage) {
+        Optional<String> raw = callApi(systemPrompt, userMessage);
+        if (raw.isEmpty()) return Optional.empty();
+        String content = raw.get().trim();
+        try {
+            // Try to locate JSON within the content
+            int start = content.indexOf('{');
+            int end = content.lastIndexOf('}');
+            if (start >= 0 && end >= 0 && end > start) {
+                String json = content.substring(start, end + 1);
+                Map<String, Object> map = objectMapper.readValue(json, new TypeReference<>() {});
+                return Optional.of(map);
+            }
+            // not JSON
+            return Optional.empty();
+        } catch (Exception e) {
+            logger.warn("Failed to parse JSON from AI response: {}", e.getMessage());
+            return Optional.empty();
         }
     }
+
+    public String moderate(String userId, String textToModerate) {
+        String system = "You are a content moderator. Answer 'allow' or 'block' and a one-line reason for the following text.";
+        return ask(system, userId, textToModerate);
+    }
+
+    public String summarize(String userId, String text, int bullets) {
+        String system = "Summarize the following text in " + bullets + " concise bullet points.";
+        return ask(system, userId, text);
+    }
+
+    public String predictMood(String userId, String moodHistory) {
+        String system = "Based on the mood history, return a single-word mood label (e.g., happy, sad, stressed, neutral). Only output the word.";
+        Optional<String> raw = askRaw(system, moodHistory);
+        if (raw.isEmpty()) return "neutral";
+        String first = raw.get().trim().split("\\s+")[0].replaceAll("[^a-zA-Z_-]", "").toLowerCase();
+        return first.isEmpty() ? "neutral" : first;
+    }
+
+    public Optional<Map<String, Object>> requestJsonActions(String userId, String context) {
+        String system = "Return a JSON object with key 'actions' which is an array of objects {\"action\":\"NAME\",\"description\":\"...\",\"urgency\":\"low|medium|high\"}. Do not include extra text.";
+        return askForJson(system, context);
+    }
+
+    public String generateTherapyMessageAndSave(String userId, String userMessage) {
+        String reply = "I hear you. " + userMessage;
+
+        ConversationMessage assistant = new ConversationMessage();
+        assistant.setUserId(userId);
+        assistant.setSender("assistant");
+        assistant.setContent(reply);
+        assistant.setTimestamp(LocalDateTime.now());
+
+        conversationRepo.save(assistant);
+        return reply;
+    }
+
 }
