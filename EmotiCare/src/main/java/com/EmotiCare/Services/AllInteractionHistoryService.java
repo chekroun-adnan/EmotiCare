@@ -1,6 +1,7 @@
 package com.EmotiCare.Services;
 
 import com.EmotiCare.Entities.AllInteractionHistory;
+import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.AllInteractionHistoryRepository;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +12,11 @@ import java.util.Optional;
 public class AllInteractionHistoryService {
 
     private final AllInteractionHistoryRepository allRepo;
+    private final AuthService authService;
 
-    public AllInteractionHistoryService(AllInteractionHistoryRepository allRepo) {
+    public AllInteractionHistoryService(AllInteractionHistoryRepository allRepo, AuthService authService) {
         this.allRepo = allRepo;
+        this.authService = authService;
     }
 
     public AllInteractionHistory createEmptyHistory(String userId) {
@@ -28,13 +31,25 @@ public class AllInteractionHistoryService {
     }
 
     public Optional<AllInteractionHistory> getHistory(String userId) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         List<AllInteractionHistory> list = allRepo.findByUserId(userId);
         if (list.isEmpty()) return Optional.empty();
         return Optional.of(list.get(0));
     }
 
     public AllInteractionHistory addMoodToHistory(String historyId, String moodId) {
-        AllInteractionHistory h = allRepo.findById(historyId).orElseThrow(() -> new RuntimeException("History not found"));
+        AllInteractionHistory h = allRepo.findById(historyId)
+                .orElseThrow(() -> new RuntimeException("History not found"));
+
+        User currentUser = authService.getCurrentUser();
+        if (!h.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         List<String> moods = h.getMoodIds();
         moods.add(moodId);
         h.setMoodIds(moods);
@@ -42,7 +57,14 @@ public class AllInteractionHistoryService {
     }
 
     public AllInteractionHistory addJournalToHistory(String historyId, String journalId) {
-        AllInteractionHistory h = allRepo.findById(historyId).orElseThrow(() -> new RuntimeException("History not found"));
+        AllInteractionHistory h = allRepo.findById(historyId)
+                .orElseThrow(() -> new RuntimeException("History not found"));
+
+        User currentUser = authService.getCurrentUser();
+        if (!h.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         List<String> journals = h.getJournalIds();
         journals.add(journalId);
         h.setJournalIds(journals);
@@ -50,7 +72,14 @@ public class AllInteractionHistoryService {
     }
 
     public AllInteractionHistory addMessageToHistory(String historyId, String messageId) {
-        AllInteractionHistory h = allRepo.findById(historyId).orElseThrow(() -> new RuntimeException("History not found"));
+        AllInteractionHistory h = allRepo.findById(historyId)
+                .orElseThrow(() -> new RuntimeException("History not found"));
+
+        User currentUser = authService.getCurrentUser();
+        if (!h.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         List<String> messages = h.getMessageIds();
         messages.add(messageId);
         h.setMessageIds(messages);
@@ -58,10 +87,22 @@ public class AllInteractionHistoryService {
     }
 
     public AllInteractionHistory save(AllInteractionHistory history) {
+        User currentUser = authService.getCurrentUser();
+        if (!history.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
         return allRepo.save(history);
     }
 
     public void deleteHistory(String id) {
+        AllInteractionHistory h = allRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("History not found"));
+
+        User currentUser = authService.getCurrentUser();
+        if (!h.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         allRepo.deleteById(id);
     }
 }

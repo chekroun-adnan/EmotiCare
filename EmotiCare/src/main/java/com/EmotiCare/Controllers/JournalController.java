@@ -2,10 +2,7 @@ package com.EmotiCare.Controllers;
 
 import com.EmotiCare.Entities.Journal;
 import com.EmotiCare.Services.JournalService;
-import com.EmotiCare.Services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,21 +31,23 @@ public class JournalController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getEntry(@PathVariable String id) {
-        Journal j = journalService.getEntry(id);
+    public ResponseEntity<?> getEntry(@PathVariable String userId, @RequestParam String id) {
+        Journal j = journalService.getEntry(id, userId);
         if (j == null) {
             return ResponseEntity.status(404).body("Journal entry not found");
         }
         return ResponseEntity.ok(j);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteEntry(@PathVariable String id) {
-        Journal j = journalService.getEntry(id);
+    public ResponseEntity<?> deleteEntry(
+            @PathVariable String id,
+            @RequestParam String userId
+    ) {
+        Journal j = journalService.getEntry(id, userId);
         if (j == null) {
             return ResponseEntity.status(404).body("Journal entry not found");
         }
-        journalService.deleteEntry(id);
+        journalService.deleteEntry(id, userId);
         return ResponseEntity.ok("Journal entry deleted");
     }
 

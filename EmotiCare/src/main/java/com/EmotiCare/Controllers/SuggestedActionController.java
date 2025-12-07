@@ -28,8 +28,8 @@ public class SuggestedActionController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable String id) {
-        actionService.delete(id);
+    public ResponseEntity<String> delete(@PathVariable String userId, @RequestParam String id) {
+        actionService.delete(userId,id);
         return ResponseEntity.ok("Action deleted");
     }
 

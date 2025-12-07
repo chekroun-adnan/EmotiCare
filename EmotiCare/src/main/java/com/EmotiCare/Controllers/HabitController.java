@@ -30,15 +30,15 @@ public class HabitController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Habit> getHabit(@PathVariable String id) {
-        return habitService.getHabit(id)
+    public ResponseEntity<Habit> getHabit(@PathVariable String id, @RequestParam String userId) {
+        return habitService.getHabit(id, userId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Habit> updateHabit(@PathVariable String id, @RequestBody Habit updated) {
-        return habitService.getHabit(id)
+        return habitService.getHabit(id, updated.getUserId())
                 .map(existing -> {
                     updated.setId(id);
                     return ResponseEntity.ok(habitService.updateHabit(updated));
@@ -46,9 +46,9 @@ public class HabitController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteHabit(@PathVariable String id) {
-        if (habitService.getHabit(id).isEmpty()) {
+    @DeleteMapping("/user/{userId}/{id}")
+    public ResponseEntity<?> deleteHabit(@PathVariable String userId, @PathVariable String id) {
+        if (habitService.getHabit(id, userId).isEmpty()) {
             return ResponseEntity.status(404).body("Habit not found");
         }
         habitService.deleteHabit(id);

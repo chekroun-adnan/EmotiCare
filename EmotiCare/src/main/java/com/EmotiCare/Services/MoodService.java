@@ -4,17 +4,10 @@ import com.EmotiCare.AI.GroqService;
 import com.EmotiCare.Entities.Mood;
 import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.MoodRepository;
-import com.EmotiCare.Repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,10 +15,12 @@ public class MoodService {
 
     private final MoodRepository moodRepository;
     private final GroqService groqService;
+    private final AuthService authService;
 
-    public MoodService(MoodRepository moodRepository, GroqService groqService) {
+    public MoodService(MoodRepository moodRepository, GroqService groqService, AuthService authService) {
         this.moodRepository = moodRepository;
         this.groqService = groqService;
+        this.authService = authService;
     }
 
     public Mood saveMood(String userId, String moodType, String note) {
@@ -37,45 +32,88 @@ public class MoodService {
         return moodRepository.save(m);
     }
 
-    public Optional<Mood> getMood(String id) {
-        return moodRepository.findById(id);
-    }
-
-    public List<Mood> getMoodHistory(String userId) {
+    public Optional<Mood> getMood(String userId) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            return Optional.empty();
+        }
         return moodRepository.findByUserId(userId);
     }
 
+    public List<Mood> getMoodHistory(String userId) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            return List.of();
+        }
+        return moodRepository.findAllByUserId(userId);
+    }
+
     public Map<String, Long> getMoodCountsLastNDays(String userId, int days) {
+
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            return Collections.emptyMap();
+        }
+
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = now.minus(days, ChronoUnit.DAYS);
+        LocalDateTime start = now.minusDays(days);
+
         List<Mood> list = moodRepository.findByUserIdAndTimestampBetween(userId, start, now);
-        return list.stream().collect(Collectors.groupingBy(Mood::getMood, Collectors.counting()));
+
+        return list.stream()
+                .collect(Collectors.groupingBy(Mood::getMood, Collectors.counting()));
     }
 
     public String predictNextMoodWithAI(String userId) {
-        List<Mood> history = getMoodHistory(userId);
-        if (history.isEmpty()) return "neutral";
+        User currentUser = authService.getCurrentUser();
 
-        StringBuilder sb = new StringBuilder();
-        int take = Math.min(20, history.size());
-        List<Mood> recent = history.subList(Math.max(0, history.size() - take), history.size());
-        for (Mood m : recent) {
-            sb.append(m.getMood()).append(", ");
+        if (!currentUser.getId().equals(userId)) {
+            return "unauthorized";
         }
 
-        String system = "You are an assistant that predicts mood using past mood history. Return a single-word mood label (e.g., happy, sad, stressed, neutral).";
-        String prompt = "User mood history: " + sb.toString();
+        List<Mood> history = getMoodHistory(userId);
+
+        if (history.isEmpty()) {
+            return "neutral";
+        }
+
+        int take = Math.min(20, history.size());
+        List<Mood> recent = history.subList(history.size() - take, history.size());
+
+        String moodHistory = recent.stream()
+                .map(Mood::getMood)
+                .collect(Collectors.joining(", "));
+
+        String system = "You are an assistant that predicts the next mood using past mood history. Return a single-word mood label such as: happy, sad, stressed, anxious, calm, relaxed, neutral.";
+        String prompt = "Here is the user's recent mood history: " + moodHistory + ". Predict the next mood.";
+
         String aiResponse = groqService.ask(system, userId, prompt);
-        if (aiResponse == null) return "neutral";
-        return aiResponse.split("\\s+")[0].replaceAll("[^a-zA-Z_-]", "").toLowerCase();
+
+        if (aiResponse == null || aiResponse.isBlank()) {
+            return "neutral";
+        }
+
+        return aiResponse
+                .split("\\s+")[0]
+                .replaceAll("[^a-zA-Z_-]", "")
+                .toLowerCase();
     }
 
     public Map<String, Double> moodDistributionPercent(String userId, int days) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            return Collections.emptyMap();
+        }
+
         Map<String, Long> counts = getMoodCountsLastNDays(userId, days);
         long total = counts.values().stream().mapToLong(Long::longValue).sum();
-        Map<String, Double> result = new HashMap<>();
-        if (total == 0) return result;
-        counts.forEach((k, v) -> result.put(k, (v * 100.0) / total));
-        return result;
+
+        if (total == 0) return Collections.emptyMap();
+
+        return counts.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> (e.getValue() * 100.0) / total
+                ));
     }
 }

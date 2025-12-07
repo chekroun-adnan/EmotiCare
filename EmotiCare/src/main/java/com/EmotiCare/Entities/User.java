@@ -61,4 +61,8 @@ public class User {
     public List<String> getHabitIds() { return habitIds; }
     public List<String> getTherapySessionIds() { return therapySessionIds; }
     public List<String> getWeeklySummaryIds() { return weeklySummaryIds; }
+
+    public boolean isAdmin() {
+        return this.role == Role.ADMIN;
+    }
 }

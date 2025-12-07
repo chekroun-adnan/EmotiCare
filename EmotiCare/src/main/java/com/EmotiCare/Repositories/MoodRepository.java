@@ -3,7 +3,6 @@ package com.EmotiCare.Repositories;
 import com.EmotiCare.Entities.Mood;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +15,9 @@ public interface MoodRepository extends MongoRepository<Mood, String> {
             LocalDateTime end
     );
 
-    List<Mood> findByUserId(String userId);
+    Optional<Mood> findByUserId(String userId);
+
+    List<Mood> findAllByUserId(String userId);
 
     List<Mood> findByUserIdOrderByTimestampAsc(String userId);
 }

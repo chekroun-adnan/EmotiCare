@@ -2,6 +2,7 @@ package com.EmotiCare.Services;
 
 import com.EmotiCare.AI.GroqService;
 import com.EmotiCare.Entities.SuggestedAction;
+import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.SuggestedActionRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,11 +15,13 @@ public class SuggestedActionService {
 
     private final SuggestedActionRepository suggestedActionRepository;
     private final GroqService groqService;
+    private final  AuthService authService;
 
     public SuggestedActionService(SuggestedActionRepository suggestedActionRepository,
-                                  GroqService groqService) {
+                                  GroqService groqService, AuthService authService) {
         this.suggestedActionRepository = suggestedActionRepository;
         this.groqService = groqService;
+        this.authService = authService;
     }
 
     public SuggestedAction save(SuggestedAction action) {
@@ -26,10 +29,26 @@ public class SuggestedActionService {
     }
 
     public List<SuggestedAction> getForUser(String userId) {
-        return suggestedActionRepository.findByUserId(userId);
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+        return suggestedActionRepository.findByUserId(currentUser.getId());
     }
 
-    public void delete(String id) {
+    public void delete(String userId, String id) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        SuggestedAction sa = suggestedActionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Suggested action not found"));
+
+        if (!sa.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized: cannot delete another user's action");
+        }
+
         suggestedActionRepository.deleteById(id);
     }
 

@@ -1,10 +1,7 @@
 package com.EmotiCare.Services;
 
 import com.EmotiCare.AI.GroqService;
-import com.EmotiCare.Entities.Habit;
-import com.EmotiCare.Entities.Journal;
-import com.EmotiCare.Entities.Mood;
-import com.EmotiCare.Entities.WeeklySummary;
+import com.EmotiCare.Entities.*;
 import com.EmotiCare.Repositories.HabitRepository;
 import com.EmotiCare.Repositories.JournalRepository;
 import com.EmotiCare.Repositories.MoodRepository;
@@ -24,17 +21,19 @@ public class WeeklySummaryService {
     private final JournalRepository journalRepository;
     private final HabitRepository habitRepository;
     private final GroqService groqService;
+    private final AuthService authService;
 
     public WeeklySummaryService(WeeklySummaryRepository weeklySummaryRepository,
                                 MoodRepository moodRepository,
                                 JournalRepository journalRepository,
                                 HabitRepository habitRepository,
-                                GroqService groqService) {
+                                GroqService groqService, AuthService authService) {
         this.weeklySummaryRepository = weeklySummaryRepository;
         this.moodRepository = moodRepository;
         this.journalRepository = journalRepository;
         this.habitRepository = habitRepository;
         this.groqService = groqService;
+        this.authService = authService;
     }
 
     public WeeklySummary createWeeklySummary(String userId) {
@@ -47,7 +46,6 @@ public class WeeklySummaryService {
                 .collect(Collectors.toList());
         List<Habit> habits = habitRepository.findByUserId(userId);
 
-        // build prompt for Groq
         StringBuilder input = new StringBuilder();
         input.append("Moods (last 7 days):\n");
         for (Mood m : moods) input.append("- ").append(m.getMood()).append(" : ").append(
@@ -81,14 +79,34 @@ public class WeeklySummaryService {
     }
 
     public List<WeeklySummary> getSummariesForUser(String userId) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
         return weeklySummaryRepository.findByUserId(userId);
     }
 
     public Optional<WeeklySummary> getSummaryById(String id) {
-        return weeklySummaryRepository.findById(id);
+        WeeklySummary ws = weeklySummaryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Weekly summary not found"));
+
+        User currentUser = authService.getCurrentUser();
+        if (!ws.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        return Optional.of(ws);
     }
 
     public void deleteSummary(String id) {
+        WeeklySummary ws = weeklySummaryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Weekly summary not found"));
+
+        User currentUser = authService.getCurrentUser();
+        if (!ws.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         weeklySummaryRepository.deleteById(id);
     }
 }

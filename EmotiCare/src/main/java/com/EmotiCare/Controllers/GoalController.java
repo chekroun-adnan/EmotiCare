@@ -28,15 +28,15 @@ public class GoalController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Goal> getGoal(@PathVariable String id) {
-        return goalService.getGoal(id)
+    public ResponseEntity<Goal> getGoal(@PathVariable String userId, @RequestParam String id) {
+        return goalService.getGoal(userId, id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Goal> updateGoal(@PathVariable String id, @RequestBody Goal updated) {
-        return goalService.getGoal(id)
+        return goalService.getGoal(id, updated.getUserId())
                 .map(existing -> {
                     updated.setId(id);
                     return ResponseEntity.ok(goalService.updateGoal(updated));
@@ -45,8 +45,8 @@ public class GoalController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteGoal(@PathVariable String id) {
-        if (goalService.getGoal(id).isEmpty()) {
+    public ResponseEntity<?> deleteGoal(@PathVariable String userId,@RequestParam String id) {
+        if (goalService.getGoal(userId, id).isEmpty()) {
             return ResponseEntity.status(404).body("Goal not found");
         }
         goalService.deleteGoal(id);

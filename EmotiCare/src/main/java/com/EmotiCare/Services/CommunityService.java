@@ -2,6 +2,8 @@ package com.EmotiCare.Services;
 
 import com.EmotiCare.AI.GroqService;
 import com.EmotiCare.Entities.CommunityPost;
+import com.EmotiCare.Entities.Role;
+import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.CommunityPostRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +16,12 @@ public class CommunityService {
 
     private final CommunityPostRepository communityPostRepository;
     private final GroqService groqService;
+    private final AuthService authService;
 
-    public CommunityService(CommunityPostRepository communityPostRepository, GroqService groqService) {
+    public CommunityService(CommunityPostRepository communityPostRepository, GroqService groqService, AuthService authService) {
         this.communityPostRepository = communityPostRepository;
         this.groqService = groqService;
+        this.authService = authService;
     }
 
     public CommunityPost createPost(String userId, String text) {
@@ -29,14 +33,23 @@ public class CommunityService {
     }
 
     public List<CommunityPost> getAllPosts() {
+        User currentUser = authService.getCurrentUser();
+        if (currentUser == null || currentUser.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Unauthorized access to all posts");
+        }
         return communityPostRepository.findAll();
     }
 
     public List<CommunityPost> getPostsByUser(String userId) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw  new RuntimeException("Unauthorized access to this posts");
+        }
         return communityPostRepository.findByUserId(userId);
     }
 
-    public Optional<CommunityPost> getPost(String id) {
+    public Optional<CommunityPost> getPost(String userId, String id) {
+        
         return communityPostRepository.findById(id);
     }
 

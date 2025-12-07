@@ -3,6 +3,7 @@ package com.EmotiCare.Services;
 import com.EmotiCare.AI.GroqService;
 import com.EmotiCare.Entities.ConversationMessage;
 import com.EmotiCare.Entities.TherapySession;
+import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.ConversationRepository;
 import com.EmotiCare.Repositories.TherapySessionRepository;
 import org.springframework.stereotype.Service;
@@ -20,13 +21,15 @@ public class TherapySessionService {
     private final TherapySessionRepository therapySessionRepository;
     private final ConversationRepository conversationMessageRepository;
     private final GroqService groqService;
+    private final AuthService authService;
 
     public TherapySessionService(TherapySessionRepository therapySessionRepository,
                                  ConversationRepository conversationMessageRepository,
-                                 GroqService groqService) {
+                                 GroqService groqService, AuthService authService) {
         this.therapySessionRepository = therapySessionRepository;
         this.conversationMessageRepository = conversationMessageRepository;
         this.groqService = groqService;
+        this.authService = authService;
     }
 
     public TherapySession startSession(String userId) {
@@ -52,37 +55,57 @@ public class TherapySessionService {
     }
 
     public Optional<TherapySession> getSession(String sessionId) {
-        return therapySessionRepository.findById(sessionId);
+        User currentUser = authService.getCurrentUser();
+
+        TherapySession session = therapySessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        if (!session.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        return Optional.of(session);
     }
 
     public List<TherapySession> getSessionsForUser(String userId) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
         return therapySessionRepository.findByUserId(userId);
     }
 
     public String summarizeSessionWithAI(String sessionId) {
+        User currentUser = authService.getCurrentUser();
+
         TherapySession s = therapySessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
-        List<String> messageIds = s.getMessageIds();
-        if (messageIds == null || messageIds.isEmpty()) {
-            // fallback: collect all messages for user
-            List<ConversationMessage> msgs = conversationMessageRepository.findByUserId(s.getUserId());
-            messageIds = msgs.stream().map(ConversationMessage::getId).collect(Collectors.toList());
+        // SECURITY: Check ownership
+        if (!s.getUserId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized");
         }
 
-        // gather message content
-        List<ConversationMessage> msgs = new ArrayList<>();
-        for (String mid : messageIds) {
-            conversationMessageRepository.findById(mid).ifPresent(msgs::add);
+        List<String> messageIds = s.getMessageIds();
+        if (messageIds == null || messageIds.isEmpty()) {
+            return "No messages available for summary.";
         }
-        if (msgs.isEmpty()) return "No messages available for summary.";
+
+        List<ConversationMessage> msgs = conversationMessageRepository.findAllById(messageIds);
+
+        if (msgs.isEmpty()) {
+            return "No messages available for summary.";
+        }
 
         String concatenated = msgs.stream()
                 .sorted(Comparator.comparing(ConversationMessage::getTimestamp))
                 .map(m -> m.getSender() + ": " + m.getContent())
                 .collect(Collectors.joining("\n"));
 
-        String system = "Summarize the therapy session into 5 concise insights and 3 recommended next steps tailored to the user.";
-        return groqService.ask(system, s.getUserId(), concatenated);
+        String system =
+                "Summarize the therapy session into exactly 5 concise psychological insights "
+                        + "and 3 actionable recommendations for the user's wellbeing.";
+
+        return groqService.ask(system, currentUser.getId(), concatenated);
     }
 }

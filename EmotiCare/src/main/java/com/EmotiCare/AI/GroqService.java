@@ -115,6 +115,7 @@ public class GroqService {
         return ask(system, userId, text);
     }
 
+
     public String predictMood(String userId, String moodHistory) {
         String system = "Based on the mood history, return a single-word mood label (e.g., happy, sad, stressed, neutral). Only output the word.";
         Optional<String> raw = askRaw(system, moodHistory);

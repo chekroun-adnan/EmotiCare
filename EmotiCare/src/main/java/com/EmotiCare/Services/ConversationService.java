@@ -2,6 +2,7 @@ package com.EmotiCare.Services;
 
 import com.EmotiCare.AI.GroqService;
 import com.EmotiCare.Entities.ConversationMessage;
+import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.ConversationRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,18 +18,24 @@ public class ConversationService {
     private final AISentimentService sentimentService;
     private final AICrisisDetectionService crisisService;
     private final GroqService groqService;
+    private final AuthService authService;
 
     public ConversationService(ConversationRepository conversationRepo,
                                AISentimentService sentimentService,
                                AICrisisDetectionService crisisService,
-                               GroqService groqService) {
+                               GroqService groqService, AuthService authService) {
         this.conversationRepo = conversationRepo;
         this.sentimentService = sentimentService;
         this.crisisService = crisisService;
         this.groqService = groqService;
+        this.authService = authService;
     }
 
     public ConversationMessage saveUserMessage(String userId, String content) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
         ConversationMessage cm = new ConversationMessage();
         cm.setUserId(userId);
         cm.setSender("user");
@@ -38,16 +45,42 @@ public class ConversationService {
         return conversationRepo.save(cm);
     }
 
-    public Optional<ConversationMessage> getMessage(String id) {
-        return conversationRepo.findById(id);
+    public Optional<ConversationMessage> getMessage(String userId, String id) {
+        User currentUser = authService.getCurrentUser();
+
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        Optional<ConversationMessage> msg = conversationRepo.findById(id);
+
+        if (msg.isEmpty() || !msg.get().getUserId().equals(userId)) {
+            throw new RuntimeException("Message not found or unauthorized");
+        }
+
+        return msg;
     }
 
     public List<ConversationMessage> getConversationForUser(String userId) {
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
         return conversationRepo.findByUserId(userId);
     }
 
     public ConversationResult handleIncomingMessage(String userId, String message) {
-        ConversationMessage saved = saveUserMessage(userId, message);
+        User currentUser = authService.getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        if (message == null || message.trim().isEmpty()) {
+            throw new RuntimeException("Message cannot be empty.");
+        }
+        message = message.trim();
+
+        ConversationMessage userMsg = saveUserMessage(userId, message);
 
         if (crisisService.isCrisis(message)) {
             String emergency = crisisService.getEmergencyMessage();
@@ -58,9 +91,9 @@ public class ConversationService {
             assistant.setContent(emergency);
             assistant.setTimestamp(LocalDateTime.now());
             conversationRepo.save(assistant);
+
             return new ConversationResult(emergency, null);
         }
-
         String reply = groqService.generateTherapyMessageAndSave(userId, message);
 
         Optional<Map<String, Object>> maybeActions = groqService.requestJsonActions(userId, message);
