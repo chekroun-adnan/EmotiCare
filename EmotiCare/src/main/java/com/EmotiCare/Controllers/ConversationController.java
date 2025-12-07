@@ -35,8 +35,8 @@ public class ConversationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ConversationMessage> getMessage(@PathVariable String id) {
-        return conversationService.getMessage(id)
+    public ResponseEntity<ConversationMessage> getMessage(@PathVariable String userId, @RequestParam String id) {
+        return conversationService.getMessage(userId,id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

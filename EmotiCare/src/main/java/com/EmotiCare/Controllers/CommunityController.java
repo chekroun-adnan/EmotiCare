@@ -42,8 +42,8 @@ public class CommunityController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getPost(@PathVariable String id) {
-        Optional<CommunityPost> p = communityService.getPost(id);
+    public ResponseEntity<?> getPost(@PathVariable String userId, @RequestParam String id) {
+        Optional<CommunityPost> p = communityService.getPost(userId,id);
 
         if (p.isEmpty())
             return ResponseEntity.notFound().build();

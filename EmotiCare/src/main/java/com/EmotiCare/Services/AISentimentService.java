@@ -11,14 +11,8 @@ import java.util.*;
 public class AISentimentService {
 
     private final Map<String, List<String>> keywords = new LinkedHashMap<>();
-    private final ConversationRepository conversationRepository;
-    private final AuthService authService;
-    private  final AISentimentService aisentimentService;
 
-    public AISentimentService(ConversationRepository conversationRepository, AuthService authService, AISentimentService aisentimentService) {
-        this.conversationRepository = conversationRepository;
-        this.authService = authService;
-        this.aisentimentService = aisentimentService;
+    public AISentimentService() {
         keywords.put("joyful", Arrays.asList("happy","joy","glad","delighted","pleased","content","cheerful","excited"));
         keywords.put("sad", Arrays.asList("sad","down","unhappy","depressed","blue","tearful"));
         keywords.put("stressed", Arrays.asList("stressed","anxious","overwhelmed","tense","burnout","panic"));
@@ -40,17 +34,6 @@ public class AISentimentService {
             }
         }
         return "neutral";
-    }
-    public String analyzeUserMessage(String messageId) {
-        ConversationMessage msg = conversationRepository.findById(messageId)
-                .orElseThrow(() -> new RuntimeException("Message not found"));
-
-        User currentUser = authService.getCurrentUser();
-        if (!msg.getUserId().equals(currentUser.getId())) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        return aisentimentService.analyzeSentiment(msg.getContent());
     }
 
     public void addKeyword(String emotion, String keyword) {
