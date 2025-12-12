@@ -34,7 +34,7 @@ public class CommunityService {
 
     public List<CommunityPost> getAllPosts() {
         User currentUser = authService.getCurrentUser();
-        if (currentUser == null || currentUser.getRole() != Role.ADMIN) {
+        if (currentUser == null || currentUser.getRole() != Role.USER) {
             throw new RuntimeException("Unauthorized access to all posts");
         }
         return communityPostRepository.findAll();
