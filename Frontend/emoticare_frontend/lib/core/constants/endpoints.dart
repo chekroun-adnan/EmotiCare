@@ -13,8 +13,8 @@ class Endpoints {
   static const moodHistory = '/api/moods/history';
   static const journal = '/api/journals';
   static const journalByUser = '/api/journals/user';
-  static const chatSend = '/chat/send';
-  static const chatHistory = '/chat/history';
+  static const chatSend = '/api/chat/send';
+  static const chatHistory = '/api/conversation/user';
   static const communityAll = '/api/community/all';
   static const communityCreate = '/api/community/create';
   static const weeklySummaryUser = '/api/weekly-summary/user';

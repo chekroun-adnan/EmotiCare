@@ -35,3 +35,29 @@ class ConversationResultModel {
     return ConversationResultModel(reply: json['reply'] as String?);
   }
 }
+
+class ChatResponseModel {
+  final bool crisis;
+  final String? reply;
+  final String? sentiment;
+  final String? recommendations;
+  final Map<String, dynamic>? actions;
+
+  const ChatResponseModel({
+    required this.crisis,
+    this.reply,
+    this.sentiment,
+    this.recommendations,
+    this.actions,
+  });
+
+  factory ChatResponseModel.fromJson(Map<String, dynamic> json) {
+    return ChatResponseModel(
+      crisis: json['crisis'] as bool? ?? false,
+      reply: json['reply'] as String?,
+      sentiment: json['sentiment'] as String?,
+      recommendations: json['recommendations'] as String?,
+      actions: json['actions'] as Map<String, dynamic>?,
+    );
+  }
+}
