@@ -15,6 +15,8 @@ import '../screens/moods_screen.dart';
 import '../screens/journal_screen.dart';
 import '../screens/chat_screen.dart';
 import '../screens/community_screen.dart';
+import '../screens/proactive_checkin_screen.dart';
+import '../screens/twin_screen.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
@@ -105,6 +107,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'community',
             name: 'community',
             builder: (_, __) => const CommunityScreen(),
+          ),
+          GoRoute(
+            path: 'proactive',
+            name: 'proactive',
+            builder: (_, __) => const ProactiveCheckinScreen(),
+          ),
+          GoRoute(
+            path: 'twin',
+            name: 'twin',
+            builder: (_, __) => const TwinScreen(),
           ),
         ],
       ),

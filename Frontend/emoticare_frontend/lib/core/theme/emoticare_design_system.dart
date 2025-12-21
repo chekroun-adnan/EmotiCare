@@ -11,16 +11,17 @@ class EmotiCareDesignSystem {
   // ============================================
 
   // Primary Colors - Soft Purple & Lavender
-  static const Color primaryPurple = Color(0xFFA78BFA);
-  static const Color primaryLavender = Color(0xFFC4B5FD);
-  static const Color primaryLight = Color(0xFFE9D5FF);
-  static const Color primaryDark = Color(0xFF7C3AED);
+  // Primary Colors - New Vibrant Palette (Indigo → Violet → Gold accent)
+  static const Color primaryPurple = Color(0xFF6D28D9); // vibrant violet
+  static const Color primaryLavender = Color(0xFF7C3AED); // soft violet
+  static const Color primaryLight = Color(0xFFF3E8FF); // light lavendar
+  static const Color primaryDark = Color(0xFF312E81); // deep indigo
 
   // Secondary Colors - Soft Pink & Blue
-  static const Color secondaryPink = Color(0xFFFBCFE8);
-  static const Color secondaryBlue = Color(0xFF93C5FD);
-  static const Color secondaryTeal = Color(0xFF81E6D9);
-  static const Color secondaryCoral = Color(0xFFFCA5A5);
+  static const Color secondaryPink = Color(0xFFFF6EA7); // magenta accent
+  static const Color secondaryBlue = Color(0xFF60A5FA); // sky blue
+  static const Color secondaryTeal = Color(0xFF2DD4BF); // teal pop
+  static const Color secondaryCoral = Color(0xFFF59E0B); // warm gold/coral accent
 
   // Neutral Colors
   static const Color neutralWhite = Color(0xFFFFFFFF);
@@ -56,7 +57,7 @@ class EmotiCareDesignSystem {
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primaryPurple, primaryLavender, secondaryPink],
+    colors: [primaryDark, primaryPurple, secondaryCoral],
     stops: [0.0, 0.5, 1.0],
   );
 
@@ -93,11 +94,11 @@ class EmotiCareDesignSystem {
 
   // Background Gradients
   static List<Color> get backgroundGradientColors => [
-        primaryPurple.withOpacity(0.08),
-        primaryLavender.withOpacity(0.06),
-        secondaryPink.withOpacity(0.04),
-        secondaryBlue.withOpacity(0.03),
-        neutralGray50,
+      primaryDark.withOpacity(0.12),
+      primaryPurple.withOpacity(0.08),
+      primaryLavender.withOpacity(0.06),
+      secondaryBlue.withOpacity(0.03),
+      neutralGray50,
       ];
 
   // ============================================
@@ -132,13 +133,13 @@ class EmotiCareDesignSystem {
       // Headline
       headlineLarge: baseText.headlineLarge?.copyWith(
         fontSize: 32,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         letterSpacing: -0.5,
         height: 1.3,
       ),
       headlineMedium: baseText.headlineMedium?.copyWith(
         fontSize: 28,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: -0.25,
         height: 1.4,
       ),
@@ -172,7 +173,7 @@ class EmotiCareDesignSystem {
       // Body
       bodyLarge: baseText.bodyLarge?.copyWith(
         fontSize: 16,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         letterSpacing: 0.5,
         height: 1.6,
       ),

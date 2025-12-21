@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
+import '../theme/emoticare_design_system.dart';
 
 /// Animated gradient background with floating shapes
 class AnimatedBackground extends StatefulWidget {
@@ -39,12 +40,8 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
 
   @override
   Widget build(BuildContext context) {
-    final colors = widget.colors ?? [
-      AppTheme.softPurple.withOpacity(0.12),
-      AppTheme.lavender.withOpacity(0.10),
-      AppTheme.lightPink.withOpacity(0.08),
-      AppTheme.softBlue.withOpacity(0.06),
-    ];
+    final defaultBg = EmotiCareDesignSystem.backgroundGradientColors;
+    final colors = widget.colors ?? defaultBg.map((c) => c.withOpacity(0.12)).toList();
 
     return Stack(
       children: [
@@ -113,10 +110,10 @@ class _FloatingBlobState extends State<_FloatingBlob>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final colors = [
-      AppTheme.softPurple.withOpacity(0.08),
-      AppTheme.lavender.withOpacity(0.06),
-      AppTheme.lightPink.withOpacity(0.05),
-      AppTheme.softBlue.withOpacity(0.04),
+      EmotiCareDesignSystem.primaryPurple.withOpacity(0.12),
+      EmotiCareDesignSystem.secondaryPink.withOpacity(0.10),
+      EmotiCareDesignSystem.secondaryBlue.withOpacity(0.08),
+      EmotiCareDesignSystem.secondaryTeal.withOpacity(0.06),
     ];
 
     return AnimatedBuilder(

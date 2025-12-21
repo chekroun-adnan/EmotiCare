@@ -16,6 +16,7 @@ import '../providers/auth_provider.dart';
 import '../providers/mood_provider.dart';
 import '../providers/habit_provider.dart';
 import '../providers/goal_provider.dart';
+import '../providers/proactive_provider.dart';
 import '../../core/widgets/async_value_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -26,12 +27,37 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _checkInDismissed = false;
+  bool _checkInTriggered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Trigger automatic check-in when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _triggerDailyCheckIn();
+    });
+  }
+
+  void _triggerDailyCheckIn() {
+    // Only trigger once per screen load and if not dismissed
+    if (!_checkInTriggered && !_checkInDismissed) {
+      final checkInState = ref.read(proactiveProvider);
+      // Only trigger if we don't already have a check-in result and not currently loading
+      if (checkInState.valueOrNull == null && !checkInState.isLoading) {
+        ref.read(proactiveProvider.notifier).manualCheckIn();
+        _checkInTriggered = true;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user;
     final moods = ref.watch(moodHistoryProvider);
     final habits = ref.watch(habitListProvider);
     final goals = ref.watch(goalListProvider);
+    final checkInState = ref.watch(proactiveProvider);
 
     // Calculate statistics
     final moodCount = moods.valueOrNull?.length ?? 0;
@@ -231,6 +257,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                       const SizedBox(height: 28),
 
+                      // Daily Check-in Card
+                      if (!_checkInDismissed)
+                        _buildDailyCheckInCard(context, checkInState)
+                            .animate()
+                            .fadeIn(delay: 250.ms, duration: 500.ms)
+                            .slideY(begin: 0.2, end: 0, delay: 250.ms, duration: 500.ms),
+
+                      if (!_checkInDismissed) const SizedBox(height: 20),
+
                       // Quick Mood Tracker with enhanced spacing
                       const QuickMoodTracker()
                           .animate()
@@ -396,6 +431,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               .animate()
                               .fadeIn(delay: 1300.ms, duration: 300.ms)
                               .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), delay: 1300.ms, duration: 300.ms),
+                          _buildQuickActionCard(
+                            context,
+                            'Check-in',
+                            Icons.bolt_rounded,
+                            AppTheme.softPurple,
+                            'Manual AI check',
+                            () => context.go('/proactive'),
+                          )
+                              .animate()
+                              .fadeIn(delay: 1400.ms, duration: 300.ms)
+                              .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), delay: 1400.ms, duration: 300.ms),
+                          _buildQuickActionCard(
+                            context,
+                            'Digital Twin',
+                            Icons.auto_awesome_rounded,
+                            AppTheme.lavender,
+                            'Your AI profile',
+                            () => context.go('/twin'),
+                          )
+                              .animate()
+                              .fadeIn(delay: 1500.ms, duration: 300.ms)
+                              .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), delay: 1500.ms, duration: 300.ms),
                         ],
                       ),
 
@@ -429,6 +486,213 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+
+  Widget _buildDailyCheckInCard(BuildContext context, AsyncValue<String?> checkInState) {
+    return checkInState.when(
+      data: (message) {
+        if (message == null) {
+          return const SizedBox.shrink();
+        }
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.softPurple.withOpacity(0.15),
+                AppTheme.lavender.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppTheme.softPurple.withOpacity(0.3),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.softPurple.withOpacity(0.2),
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [AppTheme.softPurple, AppTheme.lavender],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.bolt_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Daily Check-in',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Your AI wellness check',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppTheme.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            color: AppTheme.softPurple,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              message,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppTheme.textPrimary,
+                                    height: 1.5,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _checkInDismissed = true;
+                    });
+                  },
+                  icon: const Icon(Icons.close_rounded),
+                  iconSize: 20,
+                  color: AppTheme.textSecondary,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.softPurple.withOpacity(0.15),
+              AppTheme.lavender.withOpacity(0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: AppTheme.softPurple.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.softPurple, AppTheme.lavender],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.bolt_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Daily Check-in',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.softPurple),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Getting your personalized check-in...',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12,
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      error: (error, stack) => const SizedBox.shrink(),
+    );
+  }
 
   Widget _buildQuickActionCard(
     BuildContext context,

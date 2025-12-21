@@ -8,6 +8,8 @@ import '../../data/services/goal_service.dart';
 import '../../data/services/habit_service.dart';
 import '../../data/services/journal_service.dart';
 import '../../data/services/mood_service.dart';
+import '../../data/services/proactive_service.dart';
+import '../../data/services/twin_service.dart';
 
 final dioClientProvider = Provider<DioClient>((ref) => DioClient());
 
@@ -44,4 +46,14 @@ final communityServiceProvider = Provider<CommunityService>((ref) {
 final chatServiceProvider = Provider<ChatService>((ref) {
   final client = ref.watch(dioClientProvider);
   return ChatService(client);
+});
+
+final proactiveServiceProvider = Provider<ProactiveService>((ref) {
+  final client = ref.watch(dioClientProvider);
+  return ProactiveService(client);
+});
+
+final twinServiceProvider = Provider<TwinService>((ref) {
+  final client = ref.watch(dioClientProvider);
+  return TwinService(client);
 });

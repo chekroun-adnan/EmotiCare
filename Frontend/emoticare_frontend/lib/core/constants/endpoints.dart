@@ -18,4 +18,6 @@ class Endpoints {
   static const communityAll = '/api/community/all';
   static const communityCreate = '/api/community/create';
   static const weeklySummaryUser = '/api/weekly-summary/user';
+  static const twin = '/api/twin';
+  static const twinUpdate = '/api/twin/update';
 }
