@@ -1,4 +1,4 @@
-package com.EmotiCare.AI;
+package com.EmotiCare.ai;
 
 import org.springframework.stereotype.Service;
 

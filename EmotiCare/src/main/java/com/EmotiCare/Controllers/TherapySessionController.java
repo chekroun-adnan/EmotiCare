@@ -1,8 +1,6 @@
 package com.EmotiCare.Controllers;
 
 
-import com.EmotiCare.AI.GroqService;
-import com.EmotiCare.DTO.UserMessageDTO;
 import com.EmotiCare.Entities.TherapySession;
 import com.EmotiCare.Services.TherapySessionService;
 import org.springframework.http.ResponseEntity;

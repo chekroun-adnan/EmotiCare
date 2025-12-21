@@ -20,29 +20,30 @@ public class ChatOrchestratorService {
 
         if (crisisService.isCrisis(message)) {
             return ChatResponse.crisis(
-                    crisisService.getEmergencyMessage()
-            );
+                    crisisService.getEmergencyMessage());
         }
 
-        ConversationService.ConversationResult convoResult =
-                conversationService.handleIncomingMessage(userId, message);
+        ConversationService.ConversationResult convoResult = conversationService.handleIncomingMessage(userId, message);
 
         String sentiment = sentimentService.analyzeSentiment(message);
 
-        String recommendations =
-                recommendationService.recommendActivitiesForUser(userId, sentiment);
+        String recommendations = recommendationService.recommendActivitiesForUser(userId, sentiment);
 
         suggestedActionService.generateAndSaveActions(
                 userId,
-                "User mood: " + sentiment + ". Message: " + message
-        );
+                "User mood: " + sentiment + ". Message: " + message);
+
+        java.util.Map<String, Object> aiData = convoResult.actions;
+        java.util.List<Object> goals = aiData != null ? (java.util.List<Object>) aiData.get("goals") : null;
+        java.util.List<Object> habits = aiData != null ? (java.util.List<Object>) aiData.get("habits") : null;
 
         return ChatResponse.normal(
                 convoResult.reply,
                 sentiment,
                 recommendations,
-                convoResult.actions
-        );
+                aiData,
+                goals,
+                habits);
     }
 
     public TherapySession startSession(String userId) {
@@ -53,4 +54,3 @@ public class ChatOrchestratorService {
         return therapySessionService.summarizeSessionWithAI(sessionId);
     }
 }
-

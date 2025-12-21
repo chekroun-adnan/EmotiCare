@@ -1,6 +1,6 @@
 package com.EmotiCare.Services;
 
-import com.EmotiCare.AI.GroqService;
+import com.EmotiCare.ai.GroqService;
 import com.EmotiCare.Entities.AIResponseFeedback;
 import com.EmotiCare.Repositories.AIResponseFeedbackRepository;
 import org.springframework.stereotype.Service;

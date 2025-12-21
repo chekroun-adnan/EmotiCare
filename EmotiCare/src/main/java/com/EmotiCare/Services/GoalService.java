@@ -1,6 +1,6 @@
 package com.EmotiCare.Services;
 
-import com.EmotiCare.AI.GroqService;
+import com.EmotiCare.ai.GroqService;
 import com.EmotiCare.Entities.Goal;
 import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.GoalRepository;
@@ -67,12 +67,13 @@ public class GoalService {
 
     public Goal markGoalCompleted(String id) {
         User currentUser = authService.getCurrentUser();
-        if (!currentUser.getId().equals(id)) {
-            throw new RuntimeException("Unauthorized");
-        }
         Goal g = goalRepository.findById(id).orElseThrow(
                 () -> new RuntimeException("Goal not found"));
-        g.setCompleted(true);
+
+        if (!currentUser.getId().equals(g.getUserId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+        g.setCompleted(!g.isCompleted());
         return goalRepository.save(g);
     }
 
@@ -88,7 +89,8 @@ public class GoalService {
         } else {
             sb.append("User goals:\n");
             for (Goal g : goals) {
-                sb.append("- ").append(g.getDescription()).append(" (completed: ").append(g.isCompleted()).append(")\n");
+                sb.append("- ").append(g.getDescription()).append(" (completed: ").append(g.isCompleted())
+                        .append(")\n");
             }
         }
         String system = "Suggest 3 achievable goals for this user based on their current goals and habits. Keep them specific and actionable.";

@@ -1,4 +1,4 @@
-package com.EmotiCare.AI;
+package com.EmotiCare.ai;
 
 import com.EmotiCare.Repositories.UserRepository;
 import org.springframework.scheduling.annotation.Scheduled;

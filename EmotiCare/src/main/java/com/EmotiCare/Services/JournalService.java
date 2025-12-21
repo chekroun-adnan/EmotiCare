@@ -1,6 +1,6 @@
 package com.EmotiCare.Services;
 
-import com.EmotiCare.AI.GroqService;
+import com.EmotiCare.ai.GroqService;
 import com.EmotiCare.Entities.Journal;
 import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.JournalRepository;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,7 +18,7 @@ public class JournalService {
     private final JournalRepository journalRepository;
     private final GroqService groqService;
     private final AuthService authService;
-    private final Random random = new Random();
+    private final SecureRandom random = new SecureRandom();
 
     public JournalService(JournalRepository journalRepository, GroqService groqService, AuthService authService) {
         this.journalRepository = journalRepository;
@@ -98,7 +98,8 @@ public class JournalService {
         }
 
         List<Journal> entries = getEntries(userId);
-        if (entries.isEmpty()) return "No journal entries available.";
+        if (entries.isEmpty())
+            return "No journal entries available.";
 
         maxEntries = Math.min(maxEntries, 50);
 

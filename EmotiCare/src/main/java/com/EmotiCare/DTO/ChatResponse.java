@@ -14,18 +14,20 @@ public class ChatResponse {
     private String sentiment;
     private String recommendations;
     private Map<String, Object> actions;
+    private java.util.List<Object> goals;
+    private java.util.List<Object> habits;
 
     public static ChatResponse crisis(String msg) {
-        return new ChatResponse(true, msg, null, null, null);
+        return new ChatResponse(true, msg, null, null, null, null, null);
     }
 
     public static ChatResponse normal(
             String reply,
             String sentiment,
             String recommendations,
-            Map<String, Object> actions
-    ) {
-        return new ChatResponse(false, reply, sentiment, recommendations, actions);
+            Map<String, Object> actions,
+            java.util.List<Object> goals,
+            java.util.List<Object> habits) {
+        return new ChatResponse(false, reply, sentiment, recommendations, actions, goals, habits);
     }
 }
-

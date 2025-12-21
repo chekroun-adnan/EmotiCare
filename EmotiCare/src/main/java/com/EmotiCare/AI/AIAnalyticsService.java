@@ -1,4 +1,4 @@
-package com.EmotiCare.AI;
+package com.EmotiCare.ai;
 
 import com.EmotiCare.Entities.Mood;
 import com.EmotiCare.Entities.User;

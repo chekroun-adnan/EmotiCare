@@ -1,6 +1,6 @@
 package com.EmotiCare.Services;
 
-import com.EmotiCare.AI.GroqService;
+import com.EmotiCare.ai.GroqService;
 import com.EmotiCare.Entities.Habit;
 import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.HabitRepository;
@@ -58,10 +58,11 @@ public class HabitService {
 
     public Habit markCompleted(String habitId) {
         User currentUser = authService.getCurrentUser();
-        if (!currentUser.getId().equals(habitId)) {
+        Habit h = habitRepository.findById(habitId).orElseThrow(() -> new RuntimeException("Habit not found"));
+
+        if (!currentUser.getId().equals(h.getUserId())) {
             throw new RuntimeException("Unauthorized");
         }
-        Habit h = habitRepository.findById(habitId).orElseThrow(() -> new RuntimeException("Habit not found"));
         h.setCompleted(true);
         return habitRepository.save(h);
     }
@@ -78,7 +79,9 @@ public class HabitService {
             habitsText = "User has no tracked habits.";
         } else {
             habitsText = habits.stream()
-                    .map(h -> "- " + h.getName() + (h.getDescription() != null && !h.getDescription().isBlank() ? ": " + h.getDescription() : ""))
+                    .map(h -> "- " + h.getName()
+                            + (h.getDescription() != null && !h.getDescription().isBlank() ? ": " + h.getDescription()
+                                    : ""))
                     .collect(Collectors.joining("\n"));
         }
         String system = "You are an assistant suggesting small habit improvements. Provide 3 practical, actionable suggestions tailored to the user's habits.";

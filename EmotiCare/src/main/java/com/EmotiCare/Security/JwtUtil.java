@@ -1,6 +1,5 @@
 package com.EmotiCare.Security;
 
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -17,11 +16,7 @@ public class JwtUtil {
     @Value("${app.jwt.secret}")
     private String secret;
 
-    public String getSecret() {
-        return secret;
-    }
-
-    private final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 15;
+    private final long ACCESS_TOKEN_EXPIRATION = 1000L * 60 * 15;
     private final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 7;
 
     private Key getSigningKey() {
@@ -46,15 +41,14 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
-        return extractAllClaims(token) .getSubject();
+        return extractAllClaims(token).getSubject();
     }
 
     public boolean validateToken(String token) {
-        try{
+        try {
             extractAllClaims(token);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
     }

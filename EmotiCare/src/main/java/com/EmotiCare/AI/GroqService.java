@@ -1,4 +1,4 @@
-package com.EmotiCare.AI;
+package com.EmotiCare.ai;
 
 import com.EmotiCare.Entities.ConversationMessage;
 import com.EmotiCare.Repositories.ConversationRepository;
@@ -18,8 +18,10 @@ import java.util.*;
 public class GroqService {
     private static final Logger logger = LoggerFactory.getLogger(GroqService.class);
 
-    @Value("${groq.api.key}") private String apiKey;
-    @Value("${groq.api.url}") private String apiUrl;
+    @Value("${groq.api.key}")
+    private String apiKey;
+    @Value("${groq.api.url}")
+    private String apiUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -47,13 +49,16 @@ public class GroqService {
 
             ResponseEntity<Map> resp = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, Map.class);
             Map body = resp.getBody();
-            if (body == null) return Optional.empty();
+            if (body == null)
+                return Optional.empty();
 
             List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
-            if (choices == null || choices.isEmpty()) return Optional.empty();
+            if (choices == null || choices.isEmpty())
+                return Optional.empty();
             Map<String, Object> first = choices.get(0);
             Map<String, Object> message = (Map<String, Object>) first.get("message");
-            if (message == null) return Optional.empty();
+            if (message == null)
+                return Optional.empty();
 
             String content = (String) message.get("content");
             return Optional.ofNullable(content);
@@ -86,7 +91,8 @@ public class GroqService {
 
     public Optional<Map<String, Object>> askForJson(String systemPrompt, String userMessage) {
         Optional<String> raw = callApi(systemPrompt, userMessage);
-        if (raw.isEmpty()) return Optional.empty();
+        if (raw.isEmpty())
+            return Optional.empty();
         String content = raw.get().trim();
         try {
             // Try to locate JSON within the content
@@ -94,7 +100,8 @@ public class GroqService {
             int end = content.lastIndexOf('}');
             if (start >= 0 && end >= 0 && end > start) {
                 String json = content.substring(start, end + 1);
-                Map<String, Object> map = objectMapper.readValue(json, new TypeReference<>() {});
+                Map<String, Object> map = objectMapper.readValue(json, new TypeReference<>() {
+                });
                 return Optional.of(map);
             }
             // not JSON
@@ -115,22 +122,28 @@ public class GroqService {
         return ask(system, userId, text);
     }
 
-
     public String predictMood(String userId, String moodHistory) {
         String system = "Based on the mood history, return a single-word mood label (e.g., happy, sad, stressed, neutral). Only output the word.";
         Optional<String> raw = askRaw(system, moodHistory);
-        if (raw.isEmpty()) return "neutral";
+        if (raw.isEmpty())
+            return "neutral";
         String first = raw.get().trim().split("\\s+")[0].replaceAll("[^a-zA-Z_-]", "").toLowerCase();
         return first.isEmpty() ? "neutral" : first;
     }
 
     public Optional<Map<String, Object>> requestJsonActions(String userId, String context) {
-        String system = "Return a JSON object with key 'actions' which is an array of objects {\"action\":\"NAME\",\"description\":\"...\",\"urgency\":\"low|medium|high\"}. Do not include extra text.";
+        String system = "Return a JSON object with keys: 'actions' (array of {\"action\":\"NAME\",\"description\":\"...\",\"urgency\":\"low|medium|high\"}), 'goals' (array of {\"title\":\"...\",\"description\":\"...\"}), and 'habits' (array of {\"name\":\"...\",\"frequency\":\"daily|weekly\"}). Do not include extra text.";
         return askForJson(system, context);
     }
 
+    public String generateReply(String userId, String userMessage) {
+        String system = "You are an empathetic therapy assistant.";
+        Optional<String> reply = askRaw(system, userMessage);
+        return reply.orElse("I hear you. " + userMessage);
+    }
+
     public String generateTherapyMessageAndSave(String userId, String userMessage) {
-        String reply = "I hear you. " + userMessage;
+        String reply = generateReply(userId, userMessage);
 
         ConversationMessage assistant = new ConversationMessage();
         assistant.setUserId(userId);

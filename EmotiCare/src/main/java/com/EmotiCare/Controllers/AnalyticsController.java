@@ -1,6 +1,6 @@
 package com.EmotiCare.Controllers;
 
-import com.EmotiCare.AI.AIAnalyticsService;
+import com.EmotiCare.ai.AIAnalyticsService;
 import com.EmotiCare.Entities.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;

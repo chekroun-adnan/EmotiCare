@@ -1,11 +1,9 @@
 package com.EmotiCare.Services;
 
-import com.EmotiCare.AI.GroqService;
+import com.EmotiCare.ai.GroqService;
 import com.EmotiCare.Entities.*;
-import com.EmotiCare.Repositories.HabitRepository;
-import com.EmotiCare.Repositories.JournalRepository;
-import com.EmotiCare.Repositories.MoodRepository;
-import com.EmotiCare.Repositories.WeeklySummaryRepository;
+import com.EmotiCare.Repositories.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,99 +12,45 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class WeeklySummaryService {
 
-    private final WeeklySummaryRepository weeklySummaryRepository;
-    private final MoodRepository moodRepository;
-    private final JournalRepository journalRepository;
-    private final HabitRepository habitRepository;
-    private final GroqService groqService;
-    private final AuthService authService;
+        private final WeeklySummaryRepository weeklyRepo;
+        private final ConversationRepository convRepo;
+        private final HabitRepository habitRepo;
+        private final GroqService groq;
 
-    public WeeklySummaryService(WeeklySummaryRepository weeklySummaryRepository,
-                                MoodRepository moodRepository,
-                                JournalRepository journalRepository,
-                                HabitRepository habitRepository,
-                                GroqService groqService, AuthService authService) {
-        this.weeklySummaryRepository = weeklySummaryRepository;
-        this.moodRepository = moodRepository;
-        this.journalRepository = journalRepository;
-        this.habitRepository = habitRepository;
-        this.groqService = groqService;
-        this.authService = authService;
-    }
+        public WeeklySummary createWeeklySummary(String userId) {
+                LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
+                List<ConversationMessage> msgs = convRepo.findByUserIdAndTimestampAfter(userId, weekAgo);
 
-    public WeeklySummary createWeeklySummary(String userId) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime weekAgo = now.minusDays(7);
+                // Basic gathering of data
+                WeeklySummary summary = new WeeklySummary();
+                summary.setUserId(userId);
 
-        List<Mood> moods = moodRepository.findByUserIdAndTimestampBetween(userId, weekAgo, now);
-        List<Journal> journals = journalRepository.findByUserId(userId).stream()
-                .filter(j -> j.getTimestamp() != null && j.getTimestamp().isAfter(weekAgo))
-                .collect(Collectors.toList());
-        List<Habit> habits = habitRepository.findByUserId(userId);
+                String chatContent = msgs.stream().map(ConversationMessage::getContent)
+                                .collect(Collectors.joining("\n"));
+                if (chatContent.isEmpty())
+                        chatContent = "No chat activity.";
 
-        StringBuilder input = new StringBuilder();
-        input.append("Moods (last 7 days):\n");
-        for (Mood m : moods) input.append("- ").append(m.getMood()).append(" : ").append(
-                m.getNote() == null ? "" : m.getNote()).append("\n");
+                String system = "Generate a weekly summary for the user based on their chat history. Be supportive and highlight progress.";
+                String advice = groq.ask(system, userId, chatContent);
 
-        input.append("\nJournal snippets:\n");
-        for (Journal j : journals) {
-            String text = j.getText() == null ? "" : j.getText();
-            if (text.length() > 300) text = text.substring(0, 300) + "...";
-            input.append("- ").append(text).append("\n");
+                summary.setSummaryText("Weekly summary generated.");
+                summary.setAiGeneratedAdvice(advice);
+
+                return weeklyRepo.save(summary);
         }
 
-        input.append("\nHabits snapshot:\n");
-        for (Habit h : habits) {
-            input.append("- ").append(h.getName())
-                    .append(" (completed: ").append(h.isCompleted()).append(")\n");
+        public List<WeeklySummary> getSummariesForUser(String userId) {
+                return weeklyRepo.findByUserId(userId);
         }
 
-        String system = "You are EmotiCare AI. Generate a weekly summary containing: 1) short summary of emotional trends, 2) positives, 3) concerns, and 4) 3 practical AI-generated advice items.";
-        String aiText = groqService.ask(system, userId, input.toString());
-
-        WeeklySummary ws = new WeeklySummary();
-        ws.setUserId(userId);
-        ws.setSummaryText(aiText);
-        ws.setMoodIds(moods.stream().map(Mood::getId).collect(Collectors.toList()));
-        ws.setJournalIds(journals.stream().map(Journal::getId).collect(Collectors.toList()));
-        ws.setHabitIds(habits.stream().map(Habit::getId).collect(Collectors.toList()));
-        ws.setAiGeneratedAdvice(aiText);
-
-        return weeklySummaryRepository.save(ws);
-    }
-
-    public List<WeeklySummary> getSummariesForUser(String userId) {
-        User currentUser = authService.getCurrentUser();
-        if (!currentUser.getId().equals(userId)) {
-            throw new RuntimeException("Unauthorized");
-        }
-        return weeklySummaryRepository.findByUserId(userId);
-    }
-
-    public Optional<WeeklySummary> getSummaryById(String id) {
-        WeeklySummary ws = weeklySummaryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Weekly summary not found"));
-
-        User currentUser = authService.getCurrentUser();
-        if (!ws.getUserId().equals(currentUser.getId())) {
-            throw new RuntimeException("Unauthorized");
+        public Optional<WeeklySummary> getSummaryById(String id) {
+                return weeklyRepo.findById(id);
         }
 
-        return Optional.of(ws);
-    }
-
-    public void deleteSummary(String id) {
-        WeeklySummary ws = weeklySummaryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Weekly summary not found"));
-
-        User currentUser = authService.getCurrentUser();
-        if (!ws.getUserId().equals(currentUser.getId())) {
-            throw new RuntimeException("Unauthorized");
+        public void deleteSummary(String id) {
+                weeklyRepo.deleteById(id);
         }
-
-        weeklySummaryRepository.deleteById(id);
-    }
 }

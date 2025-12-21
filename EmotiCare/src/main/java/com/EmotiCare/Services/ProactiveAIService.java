@@ -1,6 +1,6 @@
 package com.EmotiCare.Services;
 
-import com.EmotiCare.AI.GroqService;
+import com.EmotiCare.ai.GroqService;
 import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.UserRepository;
 import org.springframework.scheduling.annotation.Scheduled;

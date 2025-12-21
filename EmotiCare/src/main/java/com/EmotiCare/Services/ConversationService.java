@@ -1,6 +1,6 @@
 package com.EmotiCare.Services;
 
-import com.EmotiCare.AI.GroqService;
+import com.EmotiCare.ai.GroqService;
 import com.EmotiCare.Entities.ConversationMessage;
 import com.EmotiCare.Entities.User;
 import com.EmotiCare.Repositories.ConversationRepository;
@@ -21,9 +21,9 @@ public class ConversationService {
     private final AuthService authService;
 
     public ConversationService(ConversationRepository conversationRepo,
-                               AISentimentService sentimentService,
-                               AICrisisDetectionService crisisService,
-                               GroqService groqService, AuthService authService) {
+            AISentimentService sentimentService,
+            AICrisisDetectionService crisisService,
+            GroqService groqService, AuthService authService) {
         this.conversationRepo = conversationRepo;
         this.sentimentService = sentimentService;
         this.crisisService = crisisService;
@@ -94,10 +94,20 @@ public class ConversationService {
 
             return new ConversationResult(emergency, null);
         }
-        String reply = groqService.generateTherapyMessageAndSave(userId, message);
 
         Optional<Map<String, Object>> maybeActions = groqService.requestJsonActions(userId, message);
         Map<String, Object> actions = maybeActions.orElse(null);
+
+        // Let's rewrite this part.
+        String reply = groqService.generateReply(userId, message);
+
+        ConversationMessage assistant = new ConversationMessage();
+        assistant.setUserId(userId);
+        assistant.setSender("assistant");
+        assistant.setContent(reply);
+        assistant.setTimestamp(LocalDateTime.now());
+        assistant.setSuggestions(actions);
+        conversationRepo.save(assistant);
 
         return new ConversationResult(reply, actions);
     }
@@ -105,6 +115,10 @@ public class ConversationService {
     public static class ConversationResult {
         public final String reply;
         public final Map<String, Object> actions;
-        public ConversationResult(String r, Map<String, Object> a) { this.reply = r; this.actions = a; }
+
+        public ConversationResult(String r, Map<String, Object> a) {
+            this.reply = r;
+            this.actions = a;
+        }
     }
 }

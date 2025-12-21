@@ -1,6 +1,6 @@
 package com.EmotiCare.Services;
 
-import com.EmotiCare.AI.GroqService;
+import com.EmotiCare.ai.GroqService;
 import com.EmotiCare.Entities.ConversationMessage;
 import com.EmotiCare.Entities.TherapySession;
 import com.EmotiCare.Entities.User;
