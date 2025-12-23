@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'jmeter'
+    static_configs:
+      - targets: ['host.docker.internal:9270']
+    scrape_interval: 5s
+    metrics_path: '/metrics'
+
+  # Add your application metrics endpoint here
+  # - job_name: 'emoticare-app'
+  #   static_configs:
+  #     - targets: ['host.docker.internal:8080']
+  #   metrics_path: '/actuator/prometheus'
+
